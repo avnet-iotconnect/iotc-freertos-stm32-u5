@@ -111,3 +111,7 @@
 [submodule "Middleware/Unity"]
 	path = Middleware/Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "Projects/b_u585i_iot02a_ntz/lib/iotc-c-lib"]
+	path = Projects/b_u585i_iot02a_ntz/lib/iotc-c-lib
+	url = https://github.com/avnet-iotconnect/iotc-c-lib
+	branch = awsformat-2.1
