@@ -217,7 +217,7 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
-        otaPal_EarlyInit();
+//        otaPal_EarlyInit();
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
@@ -243,20 +243,20 @@ void vInitTask( void * pvArgs )
     xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 2048, NULL, 10, NULL );
     configASSERT( xResult == pdTRUE );
 
-    xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
-    configASSERT( xResult == pdTRUE );
+//    xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
+//    configASSERT( xResult == pdTRUE );
 
-    xResult = xTaskCreate( vEnvironmentSensorPublishTask, "EnvSense", 1024, NULL, 6, NULL );
-    configASSERT( xResult == pdTRUE );
+//    xResult = xTaskCreate( vEnvironmentSensorPublishTask, "EnvSense", 1024, NULL, 6, NULL );
+//    configASSERT( xResult == pdTRUE );
 
     xResult = xTaskCreate( vMotionSensorsPublish, "MotionS", 2048, NULL, 5, NULL );
     configASSERT( xResult == pdTRUE );
 
-    xResult = xTaskCreate( vShadowDeviceTask, "ShadowDevice", 1024, NULL, 5, NULL );
-    configASSERT( xResult == pdTRUE );
+//    xResult = xTaskCreate( vShadowDeviceTask, "ShadowDevice", 1024, NULL, 5, NULL );
+//    configASSERT( xResult == pdTRUE );
 
-    xResult = xTaskCreate( vDefenderAgentTask, "AWSDefender", 2048, NULL, 5, NULL );
-    configASSERT( xResult == pdTRUE );
+//    xResult = xTaskCreate( vDefenderAgentTask, "AWSDefender", 2048, NULL, 5, NULL );
+//    configASSERT( xResult == pdTRUE );
 #endif /* DEMO_QUALIFICATION_TEST */
 
     while( 1 )

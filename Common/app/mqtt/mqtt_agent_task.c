@@ -913,8 +913,8 @@ static MQTTStatus_t prvConfigureAgentTaskCtx( MQTTAgentTaskCtx_t * pxCtx,
         pxCtx->pcMqttEndpoint = KVStore_getStringHeap( CS_CORE_MQTT_ENDPOINT,
                                                        &( pxCtx->uxMqttEndpointLen ) );
 
-        if( ( pxCtx->uxMqttEndpointLen == 0 ) ||
-            ( pxCtx->pcMqttEndpoint == NULL ) )
+//        pxCtx->pcMqttEndpoint = "ENDPOINT";
+        if( ( pxCtx->uxMqttEndpointLen == 0 ) || ( pxCtx->pcMqttEndpoint == NULL ) )
         {
             LogError( "Invalid mqtt endpoint read from KVStore." );
             xStatus = MQTTNoMemory;
@@ -955,6 +955,7 @@ MQTTAgentHandle_t xGetMqttAgentHandle( void )
 
 /*-----------------------------------------------------------*/
 
+extern void vLogCertInfo( mbedtls_x509_crt * pxCert, const char * pcMessage );
 void vMQTTAgentTask( void * pvParameters )
 {
     MQTTStatus_t xMQTTStatus = MQTTSuccess;

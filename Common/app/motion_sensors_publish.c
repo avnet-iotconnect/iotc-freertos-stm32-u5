@@ -28,7 +28,8 @@
 #include "logging_levels.h"
 /* define LOG_LEVEL here if you want to modify the logging level from the default */
 
-#define LOG_LEVEL    LOG_ERROR
+//#define LOG_LEVEL    LOG_ERROR
+#define LOG_LEVEL    LOG_INFO
 
 #include "logging.h"
 
@@ -61,12 +62,19 @@
 /* Sensor includes */
 #include "b_u585i_iot02a_motion_sensors.h"
 
+//Iotconnect
+#include "iotconnect_telemetry.h"
+
+#define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
+#define SUB_TOPIC	"iot/%s/cmd"
+#define APP_VERSION "01.00.05"
+
 /**
  * @brief Size of statically allocated buffers for holding topic names and
  * payloads.
  */
 #define MQTT_PUBLISH_MAX_LEN                 ( 200 )
-#define MQTT_PUBLISH_PERIOD_MS               ( 500 )
+#define MQTT_PUBLISH_PERIOD_MS               ( 3000 )
 #define MQTT_PUBLICH_TOPIC_STR_LEN           ( 256 )
 #define MQTT_PUBLISH_BLOCK_TIME_MS           ( 200 )
 #define MQTT_PUBLISH_NOTIFICATION_WAIT_MS    ( 1000 )
@@ -213,6 +221,31 @@ static BaseType_t xInitSensors( void )
     return( lBspError == BSP_ERROR_NONE ? pdTRUE : pdFALSE );
 }
 
+// publish telemetry data to iotc
+static char* publish_telemetry(BSP_MOTION_SENSOR_Axes_t accel_data, BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data) {
+    IotclMessageHandle msg = iotcl_telemetry_create();
+
+    // Optional. The first time you create a data point, the current timestamp will be automatically added
+    // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
+    iotcl_telemetry_add_with_iso_time(msg, NULL);
+    iotcl_telemetry_set_number(msg, "accelerometer.x", accel_data.x);
+    iotcl_telemetry_set_number(msg, "accelerometer.y", accel_data.y);
+    iotcl_telemetry_set_number(msg, "accelerometer.z", accel_data.z);
+
+    iotcl_telemetry_set_number(msg, "gyro.x", gyro_data.x);
+    iotcl_telemetry_set_number(msg, "gyro.y", gyro_data.y);
+    iotcl_telemetry_set_number(msg, "gyro.z", gyro_data.z);
+
+    iotcl_telemetry_set_number(msg, "magnetometer.x", mag_data.x);
+    iotcl_telemetry_set_number(msg, "magnetometer.y", mag_data.y);
+    iotcl_telemetry_set_number(msg, "magnetometer.z", mag_data.z);
+
+    iotcl_telemetry_set_string(msg, "version", APP_VERSION);
+
+    const char* str = iotcl_create_serialized_string(msg, false);
+    return (char* )str;
+}
+
 /*-----------------------------------------------------------*/
 void vMotionSensorsPublish( void * pvParameters )
 {
@@ -242,7 +275,8 @@ void vMotionSensorsPublish( void * pvParameters )
     }
     else
     {
-        lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, "%s/motion_sensor_data", pcDeviceId );
+//        lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, "%s/motion_sensor_data", pcDeviceId );
+    	lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId );
     }
 
     if( ( lTopicLen <= 0 ) || ( lTopicLen > MQTT_PUBLICH_TOPIC_STR_LEN ) )
@@ -267,7 +301,8 @@ void vMotionSensorsPublish( void * pvParameters )
 
         if( lBspError == BSP_ERROR_NONE )
         {
-            int lbytesWritten = snprintf( pcPayloadBuf,
+/*
+        	int lbytesWritten = snprintf( pcPayloadBuf,
                                           MQTT_PUBLISH_MAX_LEN,
                                           "{"
                                           "\"acceleration_mG\":"
@@ -292,10 +327,19 @@ void vMotionSensorsPublish( void * pvParameters )
                                           xAcceleroAxes.x, xAcceleroAxes.y, xAcceleroAxes.z,
                                           xGyroAxes.x, xGyroAxes.y, xGyroAxes.z,
                                           xMagnetoAxes.x, xMagnetoAxes.y, xMagnetoAxes.z );
+*/
+            char* data = publish_telemetry(xAcceleroAxes, xGyroAxes, xMagnetoAxes);
+            if (data == NULL) {
+            	printf("data is NULL...\n");
+            	return;
+            }
+            int lbytesWritten = snprintf(pcPayloadBuf, MQTT_PUBLISH_MAX_LEN, "%s", data);
 
             if( ( lbytesWritten < MQTT_PUBLISH_MAX_LEN ) &&
                 ( xIsMqttAgentConnected() == pdTRUE ) )
             {
+            	LogInfo( "PUB TOPIC is %s.", pcTopicString);
+            	LogInfo( "PAYLOAD is %s.", pcPayloadBuf);
                 xResult = prvPublishAndWaitForAck( xAgentHandle,
                                                    pcTopicString,
                                                    pcPayloadBuf,
