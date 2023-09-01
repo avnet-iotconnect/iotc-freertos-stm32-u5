@@ -115,3 +115,7 @@
 	path = Projects/b_u585i_iot02a_ntz/lib/iotc-c-lib
 	url = https://github.com/avnet-iotconnect/iotc-c-lib
 	branch = awsformat-2.1
+[submodule "Projects/b_u585i_iot02a_ntz/lib/cJSON"]
+	path = Projects/b_u585i_iot02a_ntz/lib/cJSON
+	url = https://github.com/DaveGamble/cJSON
+	branch = master
