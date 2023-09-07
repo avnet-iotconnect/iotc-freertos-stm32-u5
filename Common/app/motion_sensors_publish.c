@@ -67,7 +67,7 @@
 
 #define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
 #define SUB_TOPIC	"iot/%s/cmd"
-#define APP_VERSION "01.00.05"
+#define APP_VERSION "01.00.06"
 
 /**
  * @brief Size of statically allocated buffers for holding topic names and
@@ -222,8 +222,7 @@ static BaseType_t xInitSensors( void )
 }
 
 // publish telemetry data to iotc
-static char* publish_telemetry(BSP_MOTION_SENSOR_Axes_t accel_data, BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data) {
-    IotclMessageHandle msg = iotcl_telemetry_create();
+static char* publish_telemetry(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axes_t accel_data, BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data) {
 
     // Optional. The first time you create a data point, the current timestamp will be automatically added
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
@@ -243,6 +242,7 @@ static char* publish_telemetry(BSP_MOTION_SENSOR_Axes_t accel_data, BSP_MOTION_S
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
 
     const char* str = iotcl_create_serialized_string(msg, false);
+    iotcl_telemetry_destroy(msg);
     return (char* )str;
 }
 
@@ -289,7 +289,8 @@ void vMotionSensorsPublish( void * pvParameters )
 
     xAgentHandle = xGetMqttAgentHandle();
 
-    while( xExitFlag == pdFALSE )
+//    while( xExitFlag == pdFALSE )
+    while (1)
     {
         /* Interpret sensor data */
         int32_t lBspError = BSP_ERROR_NONE;
@@ -328,12 +329,15 @@ void vMotionSensorsPublish( void * pvParameters )
                                           xGyroAxes.x, xGyroAxes.y, xGyroAxes.z,
                                           xMagnetoAxes.x, xMagnetoAxes.y, xMagnetoAxes.z );
 */
-            char* data = publish_telemetry(xAcceleroAxes, xGyroAxes, xMagnetoAxes);
+            IotclMessageHandle message = iotcl_telemetry_create();
+            char* data = publish_telemetry(message, xAcceleroAxes, xGyroAxes, xMagnetoAxes);
+
             if (data == NULL) {
             	printf("data is NULL...\n");
             	return;
             }
             int lbytesWritten = snprintf(pcPayloadBuf, MQTT_PUBLISH_MAX_LEN, "%s", data);
+            iotcl_destroy_serialized(data);
 
             if( ( lbytesWritten < MQTT_PUBLISH_MAX_LEN ) &&
                 ( xIsMqttAgentConnected() == pdTRUE ) )
