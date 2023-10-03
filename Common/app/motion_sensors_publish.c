@@ -80,13 +80,13 @@ const char *cpId = "97FF86E8728645E9B89F7B07977E4JSON_FORMAT_AWS_21_WEBB15";
 // Define one of these for the message format
 
 // Handcrafted JSON, sent to to $aws/rules/msg_d2c_rpt/<device id>/<telemetry_cd>/2.1/0  (works)
-#define JSON_FORMAT_HANDCRAFTED_WORKING
+//#define JSON_FORMAT_HANDCRAFTED_WORKING
 
 // Handcrafted JSON string in iotc-c-lib format with minimal payload of "version"  (works)
 //#define JSON_FORMAT_MINIMAL_VERSION_PAYLOAD)
 
-// Handcrafted JSON string in iotc-c-lib format with telemetry data (not working)
-//#define JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED)
+// Handcrafted JSON string in iotc-c-lib format with telemetry data (working)
+#define JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED)
 
 // Telemetry JSON created with iotc-c-lib (not working)
 //#define JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
@@ -96,8 +96,8 @@ const char *cpId = "97FF86E8728645E9B89F7B07977E4JSON_FORMAT_AWS_21_WEBB15";
 	#define PUB_TOPIC_FORMAT	"$aws/rules/msg_d2c_rpt/%s/%s/2.1/0"
 
 #elif defined(JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED) \
-		|| defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD)
-		|| JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
+		|| defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD) \
+		|| defined(JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
 	#define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
 
 #else
@@ -270,13 +270,14 @@ static char* publish_telemetry(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axes_t 
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
 //    iotcl_telemetry_add_with_iso_time(msg, NULL);
 
+    iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.x);
+    iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.y);
+    iotcl_telemetry_set_number(msg, "gyro_z", gyro_data.z);
+
     iotcl_telemetry_set_number(msg, "accelerometer_x", accel_data.x);
     iotcl_telemetry_set_number(msg, "accelerometer_y", accel_data.y);
     iotcl_telemetry_set_number(msg, "accelerometer_z", accel_data.z);
 
-    iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.x);
-    iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.y);
-    iotcl_telemetry_set_number(msg, "gyro_z", gyro_data.z);
 
 //    iotcl_telemetry_set_number(msg, "magnetometer_x", mag_data.x);
 //    iotcl_telemetry_set_number(msg, "magnetometer_y", mag_data.y);
@@ -337,11 +338,13 @@ void vMotionSensorsPublish( void * pvParameters )
 #if defined (JSON_FORMAT_HANDCRAFTED_WORKING)
     	lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId, pcTelemetryCd );
 #elif  defined(JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED) \
-		|| defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD)
-		|| JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
+		|| defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD) \
+		|| defined(JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
+
     	lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId);
 #endif
 
+    	LogInfo("TopicString: %s", pcTopicString);
     }
 
     if( ( lTopicLen <= 0 ) || ( lTopicLen > MQTT_PUBLICH_TOPIC_STR_LEN ) )
@@ -407,28 +410,32 @@ void vMotionSensorsPublish( void * pvParameters )
 #elif defined(JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED)
       	 int lbytesWritten = snprintf( pcPayloadBuf,
                                           MQTT_PUBLISH_MAX_LEN,
-										  " {"
-									      	 "{"
-									      	    "\"cd\":\"%s\","
-									      	    "\"d\":{"
-									      	        "\"d\":[{"
-									      	            "\"d\":{\"accelerometer_x\":%d,"
-									      	                "\"accelerometer_y\":%d,"
-									      	                "\"accelerometer_z\":%d,"
-									      	                "\"gyro_x\":%d,"
-									      	                "\"gyro_y\":%d,"
-									      	                "\"gyro_z\":%d,"
-									      	                "\"version\":\"APP-1.0\""
-									      	            "},"
-//									      	            "\"dt\":\"2023-10-03T11:11:45.000Z\""
-									      	        "}],"
-//										  	  	  	"\"dt\":\"2023-10-03T11:11:45.000Z\""
-         										  "}"
-									      	  "}"
-										  " }",
+										  "{"
+										    "\"cd\": \"%s\","
+										    "\"d\": {"
+										      "\"d\": ["
+										        "{"
+										          "\"d\": {"
+										            "\"gyro_x\": %d,"
+										            "\"gyro_y\": %d,"
+										  	  	  	"\"gyro_z\": %d,"
+										  	  	  	"\"accelerometer_x\": %d,"
+										  	  	    "\"accelerometer_y\": %d,"
+										  	  	  	"\"accelerometer_z\": %d,"
+										  	  	  	"\"version\": \"2023-10-03T14:51:55.000Z\""
+										          "}"
+										        "}"
+										      "]"
+										    "},"
+										    "\"mt\": 0"
+										  "}",
 										  pcTelemetryCd,
-										  xAcceleroAxes.x, xAcceleroAxes.y, xAcceleroAxes.z,
-                                          xGyroAxes.x, xGyroAxes.y, xGyroAxes.z);
+                                          xGyroAxes.x,
+										  xGyroAxes.y,
+										  xGyroAxes.z,
+										  xAcceleroAxes.x,
+										  xAcceleroAxes.y,
+										  xAcceleroAxes.z);
 
 
 #elif defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD)
