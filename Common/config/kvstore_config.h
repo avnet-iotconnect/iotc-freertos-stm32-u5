@@ -39,6 +39,7 @@ typedef enum KvStoreEnum
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
     CS_TIME_HWM_S_1970,
+	CS_IOTC_TELEMETRY_CD,
     CS_NUM_KEYS
 } KVStoreKey_t;
 
@@ -96,6 +97,11 @@ typedef enum KvStoreEnum
 #if !defined( WIFI_SECURITY_DFLT )
 #define WIFI_SECURITY_DFLT    ""
 #endif /* !defined ( WIFI_SECURITY_DFLT ) */
+
+#if !defined( IOTC_TELEMETRY_CD_DFLT )
+#define IOTC_TELEMETRY_CD_DFLT    ""
+#endif /* !defined ( IOTC_TELEMETRY_CD_DFLT ) */
+
 /* -------------------------------- Values for common attributes -------------------------------- */
 
 /* Array to map between strings and KVStoreKey_t IDs */
@@ -107,7 +113,8 @@ typedef enum KvStoreEnum
         "wifi_ssid",       \
         "wifi_credential", \
         "time_hwm"         \
-    }
+        "telemetry_cd"     \
+	}
 
 #define KV_STORE_DEFAULTS                                                          \
     {                                                                              \
@@ -117,6 +124,7 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
         KV_DFLT( KV_TYPE_UINT32, 0 ),                  /* CS_TIME_HWM_S_1970 */    \
-    }
+        KV_DFLT( KV_TYPE_STRING, IOTC_TELEMETRY_CD_DFLT ), /* CS_IOTC_TELEMETRY_CD */ \
+}
 
 #endif /* _KVSTORE_CONFIG_H */

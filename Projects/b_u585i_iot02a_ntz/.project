@@ -84,7 +84,7 @@
 		<link>
 			<name>Libraries/FreeRTOS-Libraries-Integration-Tests</name>
 			<type>2</type>
-			<location>WORKSPACE_LOC/Middleware/FreeRTOS/FreeRTOS-Libraries-Integration-Tests/src</location>
+			<locationURI>WORKSPACE_LOC/Middleware/FreeRTOS/FreeRTOS-Libraries-Integration-Tests/src</locationURI>
 		</link>
 		<link>
 			<name>Libraries/LittleFS</name>
@@ -99,7 +99,7 @@
 		<link>
 			<name>Libraries/Unity</name>
 			<type>2</type>
-			<location>WORKSPACE_LOC/Middleware/Unity</location>
+			<locationURI>WORKSPACE_LOC/Middleware/Unity</locationURI>
 		</link>
 		<link>
 			<name>Libraries/backoffAlgorithm</name>
@@ -409,7 +409,7 @@
 	</linkedResources>
 	<filteredResources>
 		<filter>
-			<id>1649178521185</id>
+			<id>1695132715448</id>
 			<name></name>
 			<type>6</type>
 			<matcher>

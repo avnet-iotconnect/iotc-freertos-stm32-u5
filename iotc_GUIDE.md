@@ -114,6 +114,16 @@ Next, set the mqtt endpoint to the endpoint for your account:
 mqtt_endpoint="xxxxxxxxxxxxxx-ats.iot.us-west-2.amazonaws.com"
 ```
 
+#### Telemetry CD variable
+Next, set the telemetry_cd for your device from the "connection info" link on the device page of IoT-Connect.
+
+This can also be defined manually within the source file of motion_sensors_publish.c.
+
+```
+conf set telemetry_cd XG4EOMA
+telemetry_cd="XG4EOMA"
+```
+
 #### Commit Configuration Changes
 Finally, commit the staged configuration changes to non-volatile memory.
 ```
