@@ -183,6 +183,7 @@ static void vHeartbeatTask( void * pvParameters )
 }
 
 extern void net_main( void * pvParameters );
+extern void sntp_task( void * );
 extern void vMQTTAgentTask( void * );
 extern void vMotionSensorsPublish( void * );
 extern void vEnvironmentSensorPublishTask( void * );
@@ -236,11 +237,14 @@ void vInitTask( void * pvArgs )
     xResult = xTaskCreate( &net_main, "MxNet", 1024, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
 
+    xResult = xTaskCreate( &sntp_task, "sntp", 4096, NULL, 23, NULL );
+    configASSERT( xResult == pdTRUE );
+
 #if DEMO_QUALIFICATION_TEST
     xResult = xTaskCreate( run_qualification_main, "QualTest", 4096, NULL, 10, NULL );
     configASSERT( xResult == pdTRUE );
 #else
-    xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 2048, NULL, 10, NULL );
+    xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 4096, NULL, 10, NULL );
     configASSERT( xResult == pdTRUE );
 
 //    xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );

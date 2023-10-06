@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>iotc-freertos-stm32-u5</name>
+	<comment></comment>
+	<projects>
+		<project>b_u585i_iot02a_ntz</project>
+		<project>b_u585i_iot02a_tfm</project>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+	</natures>
+</projectDescription>

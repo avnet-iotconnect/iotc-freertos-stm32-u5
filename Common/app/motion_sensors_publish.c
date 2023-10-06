@@ -65,49 +65,22 @@
 //Iotconnect
 #include "iotconnect_lib.h"
 #include "iotconnect_telemetry.h"
+//#include "lwip/netif.h"
 
 /*
  * IOT-Connect settings
  */
 
 // CPID string
-const char *cpId = "97FF86E8728645E9B89F7B07977E4JSON_FORMAT_AWS_21_WEBB15";
-
+//const char *cpId = "97FF86E8728645E9B89F7B07977E4JSON_FORMAT_AWS_21_WEBB15";
+const char *cpId = "dummy_cpid_string";
 
 // Define a hardcoded telemetry "cd" variable here, overriding any set on command line
 #define HARDCODED_TELEMETRY_CD  "XG4EOMA"
 
-// Define one of these for the message format
-
-// Handcrafted JSON, sent to to $aws/rules/msg_d2c_rpt/<device id>/<telemetry_cd>/2.1/0  (works)
-//#define JSON_FORMAT_HANDCRAFTED_WORKING
-
-// Handcrafted JSON string in iotc-c-lib format with minimal payload of "version"  (works)
-//#define JSON_FORMAT_MINIMAL_VERSION_PAYLOAD)
-
-// Handcrafted JSON string in iotc-c-lib format with telemetry data (working)
-#define JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED)
-
-// Telemetry JSON created with iotc-c-lib (not working)
-//#define JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
-
-
-#if defined (JSON_FORMAT_HANDCRAFTED_WORKING)
-	#define PUB_TOPIC_FORMAT	"$aws/rules/msg_d2c_rpt/%s/%s/2.1/0"
-
-#elif defined(JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED) \
-		|| defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD) \
-		|| defined(JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
-	#define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
-
-#else
-#error "Undefined JSON format, define one of the above formats"
-#endif
-
+#define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
 
 #define SUB_TOPIC	"iot/%s/cmd"
-
-//#define APP_VERSION "01.00.06"
 
 #define APP_VERSION "01.00.06"
 
@@ -268,7 +241,7 @@ static char* publish_telemetry(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axes_t 
 
     // Optional. The first time you create a data point, the current timestamp will be automatically added
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
-//    iotcl_telemetry_add_with_iso_time(msg, NULL);
+    iotcl_telemetry_add_with_iso_time(msg, NULL);
 
     iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.x);
     iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.y);
@@ -278,15 +251,13 @@ static char* publish_telemetry(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axes_t 
     iotcl_telemetry_set_number(msg, "accelerometer_y", accel_data.y);
     iotcl_telemetry_set_number(msg, "accelerometer_z", accel_data.z);
 
-
-//    iotcl_telemetry_set_number(msg, "magnetometer_x", mag_data.x);
-//    iotcl_telemetry_set_number(msg, "magnetometer_y", mag_data.y);
-//    iotcl_telemetry_set_number(msg, "magnetometer_z", mag_data.z);
+#if 0
+    iotcl_telemetry_set_number(msg, "magnetometer_x", mag_data.x);
+    iotcl_telemetry_set_number(msg, "magnetometer_y", mag_data.y);
+    iotcl_telemetry_set_number(msg, "magnetometer_z", mag_data.z);
+#endif
 
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
-
-    LogInfo("iotcl_create_serialized_string: msg:%08x", (uint32_t)msg);
-
 
     const char* str = iotcl_create_serialized_string(msg, false);
 
@@ -312,6 +283,7 @@ void vMotionSensorsPublish( void * pvParameters )
     char * pcTelemetryCd = NULL;
     int lTopicLen = 0;
 
+
     xResult = xInitSensors();
 
     if( xResult != pdTRUE )
@@ -322,11 +294,11 @@ void vMotionSensorsPublish( void * pvParameters )
 
     pcDeviceId = KVStore_getStringHeap( CS_CORE_THING_NAME, NULL );
 
-#if defined (HARDCODED_TELEMETRY_CD)
-    pcTelemetryCd = HARDCODED_TELEMETRY_CD;
-#else
     pcTelemetryCd = KVStore_getStringHeap( CS_IOTC_TELEMETRY_CD, NULL );
-#endif
+
+    if (pcTelemetryCd == NULL) {
+        pcTelemetryCd = HARDCODED_TELEMETRY_CD;
+    }
 
     if( pcDeviceId == NULL || pcTelemetryCd == NULL)
     {
@@ -334,17 +306,7 @@ void vMotionSensorsPublish( void * pvParameters )
     }
     else
     {
-
-#if defined (JSON_FORMAT_HANDCRAFTED_WORKING)
-    	lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId, pcTelemetryCd );
-#elif  defined(JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED) \
-		|| defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD) \
-		|| defined(JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
-
     	lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId);
-#endif
-
-    	LogInfo("TopicString: %s", pcTopicString);
     }
 
     if( ( lTopicLen <= 0 ) || ( lTopicLen > MQTT_PUBLICH_TOPIC_STR_LEN ) )
@@ -354,7 +316,6 @@ void vMotionSensorsPublish( void * pvParameters )
     }
 
     vSleepUntilMQTTAgentReady();
-
     xAgentHandle = xGetMqttAgentHandle();
 
     IotclConfig iot_config;
@@ -366,12 +327,6 @@ void vMotionSensorsPublish( void * pvParameters )
     iot_config.telemetry.cd = pcTelemetryCd;
     iot_config.telemetry.dtg = NULL;
     iotcl_init_v2(&iot_config);
-
-    while (1) {
-        if( xIsMqttAgentConnected() == pdTRUE ) {
-        	break;
-        }
-    }
 
     while (1)
     {
@@ -385,79 +340,6 @@ void vMotionSensorsPublish( void * pvParameters )
 
         if( lBspError == BSP_ERROR_NONE )
         {
-#if defined(JSON_FORMAT_HANDCRAFTED_WORKING)
-      	 int lbytesWritten = snprintf( pcPayloadBuf,
-                                          MQTT_PUBLISH_MAX_LEN,
-										  " {"
-  								      	  " \"cd\": \"%s\","
-								      	  " \"mt\": 0,"
-										  "  \"d\": [{"
-										  "    \"d\": {"
-										  "     \"accelerometer_x\":%d,"
-										  "     \"accelerometer_y\":%d,"
-										  "     \"accelerometer_z\":%d,"
-										  "     \"gyro_x\":%d,"
-										  "     \"gyro_y\":%d,"
-										  "     \"gyro_z\":%d"
-										  "    }"
-										  "  }]"
-										  " }",
-										  pcTelemetryCd,
-										  xAcceleroAxes.x, xAcceleroAxes.y, xAcceleroAxes.z,
-                                          xGyroAxes.x, xGyroAxes.y, xGyroAxes.z);
-
-
-#elif defined(JSON_FORMAT_IOTC_C_LIB_HANDCRAFTED)
-      	 int lbytesWritten = snprintf( pcPayloadBuf,
-                                          MQTT_PUBLISH_MAX_LEN,
-										  "{"
-										    "\"cd\": \"%s\","
-										    "\"d\": {"
-										      "\"d\": ["
-										        "{"
-										          "\"d\": {"
-										            "\"gyro_x\": %d,"
-										            "\"gyro_y\": %d,"
-										  	  	  	"\"gyro_z\": %d,"
-										  	  	  	"\"accelerometer_x\": %d,"
-										  	  	    "\"accelerometer_y\": %d,"
-										  	  	  	"\"accelerometer_z\": %d,"
-										  	  	  	"\"version\": \"2023-10-03T14:51:55.000Z\""
-										          "}"
-										        "}"
-										      "]"
-										    "},"
-										    "\"mt\": 0"
-										  "}",
-										  pcTelemetryCd,
-                                          xGyroAxes.x,
-										  xGyroAxes.y,
-										  xGyroAxes.z,
-										  xAcceleroAxes.x,
-										  xAcceleroAxes.y,
-										  xAcceleroAxes.z);
-
-
-#elif defined(JSON_FORMAT_MINIMAL_VERSION_PAYLOAD)
-      	 int lbytesWritten = snprintf( pcPayloadBuf,
-                                          MQTT_PUBLISH_MAX_LEN,
-										 "{"
-										  "\"d\": {"
-											"\"d\": [{"
-												"\"d\": {"
-												  "\"version\": \"APP-1.0\""
-												"}"
-											"}]"
-										  "}"
-										  "\"mt\": 0,"
-										  "\"cd\": \"%s\""
-										"}",
-										pcTelemetryCd
-										  );
-
-#elif defined (JSON_FORMAT_IOTC_C_LIB_TELEMETRY)
-        	vTaskDelay(1000);
-
             IotclMessageHandle message = iotcl_telemetry_create();
             char* data = publish_telemetry(message, xAcceleroAxes, xGyroAxes, xMagnetoAxes);
 
@@ -469,12 +351,11 @@ void vMotionSensorsPublish( void * pvParameters )
             int lbytesWritten = snprintf(pcPayloadBuf, MQTT_PUBLISH_MAX_LEN, "%s", data);
             iotcl_destroy_serialized(data);
 
-#endif
-        	LogInfo( "PAYLOAD is %s.", pcPayloadBuf);
+//            LogInfo( "PAYLOAD is %s.", pcPayloadBuf);
 
             if( (xIsMqttAgentConnected() == pdTRUE ) )
             {
-            	LogInfo( "PUB TOPIC is %s", pcTopicString);
+//            	LogInfo( "PUB TOPIC is %s", pcTopicString);
                 xResult = prvPublishAndWaitForAck( xAgentHandle,
                                                    pcTopicString,
                                                    pcPayloadBuf,
@@ -492,3 +373,5 @@ void vMotionSensorsPublish( void * pvParameters )
 
     vPortFree( pcDeviceId );
 }
+
+
