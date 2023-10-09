@@ -65,23 +65,16 @@
 //Iotconnect
 #include "iotconnect_lib.h"
 #include "iotconnect_telemetry.h"
-//#include "lwip/netif.h"
+
 
 /*
  * IOT-Connect settings
  */
 
 // CPID string
-//const char *cpId = "97FF86E8728645E9B89F7B07977E4JSON_FORMAT_AWS_21_WEBB15";
 const char *cpId = "dummy_cpid_string";
-
-// Define a hardcoded telemetry "cd" variable here, overriding any set on command line
-#define HARDCODED_TELEMETRY_CD  "XG4EOMA"
-
 #define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
-
 #define SUB_TOPIC	"iot/%s/cmd"
-
 #define APP_VERSION "01.00.06"
 
 /**
@@ -297,7 +290,8 @@ void vMotionSensorsPublish( void * pvParameters )
     pcTelemetryCd = KVStore_getStringHeap( CS_IOTC_TELEMETRY_CD, NULL );
 
     if (pcTelemetryCd == NULL) {
-        pcTelemetryCd = HARDCODED_TELEMETRY_CD;
+        LogError( "Error getting the telemetry_cd setting." );
+        vTaskDelete( NULL );
     }
 
     if( pcDeviceId == NULL || pcTelemetryCd == NULL)
@@ -312,7 +306,7 @@ void vMotionSensorsPublish( void * pvParameters )
     if( ( lTopicLen <= 0 ) || ( lTopicLen > MQTT_PUBLICH_TOPIC_STR_LEN ) )
     {
         LogError( "Error while constructing topic string." );
-        xExitFlag = pdTRUE;
+        vTaskDelete( NULL );
     }
 
     vSleepUntilMQTTAgentReady();
@@ -344,14 +338,12 @@ void vMotionSensorsPublish( void * pvParameters )
             char* data = publish_telemetry(message, xAcceleroAxes, xGyroAxes, xMagnetoAxes);
 
             if (data == NULL) {
-            	LogInfo("data is NULL...\n");
-            	return;
+            	LogError("Could not create telemetry data\n");
+                vTaskDelete( NULL );
             }
 
             int lbytesWritten = snprintf(pcPayloadBuf, MQTT_PUBLISH_MAX_LEN, "%s", data);
             iotcl_destroy_serialized(data);
-
-//            LogInfo( "PAYLOAD is %s.", pcPayloadBuf);
 
             if( (xIsMqttAgentConnected() == pdTRUE ) )
             {

@@ -74,14 +74,16 @@ lfs_t * pxGetDefaultFsCtx( void )
     return pxLfsCtx;
 }
 
+lfs_t xLfsCtx = { 0 };
+const struct lfs_config * pxCfg;
+
 static int fs_init( void )
 {
-    static lfs_t xLfsCtx = { 0 };
 
     struct lfs_info xDirInfo = { 0 };
 
     /* Block time of up to 1 s for filesystem to initialize */
-    const struct lfs_config * pxCfg = pxInitializeOSPIFlashFs( pdMS_TO_TICKS( 30 * 1000 ) );
+    pxCfg = pxInitializeOSPIFlashFs( pdMS_TO_TICKS( 30 * 1000 ) );
 
     /* mount the filesystem */
     int err = lfs_mount( &xLfsCtx, pxCfg );

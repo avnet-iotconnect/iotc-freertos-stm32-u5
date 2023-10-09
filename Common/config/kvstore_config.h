@@ -38,9 +38,8 @@ typedef enum KvStoreEnum
     CS_CORE_MQTT_PORT,
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
-    CS_TIME_HWM_S_1970,
 	CS_IOTC_TELEMETRY_CD,
-    CS_NUM_KEYS
+	CS_NUM_KEYS
 } KVStoreKey_t;
 
 /* -------------------------------- Values for common attributes -------------------------------- */
@@ -112,7 +111,6 @@ typedef enum KvStoreEnum
         "mqtt_port",       \
         "wifi_ssid",       \
         "wifi_credential", \
-        "time_hwm"         \
         "telemetry_cd"     \
 	}
 
@@ -123,8 +121,8 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_UINT32, MQTT_PORT_DFLT ),     /* CS_CORE_MQTT_PORT */     \
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
-        KV_DFLT( KV_TYPE_UINT32, 0 ),                  /* CS_TIME_HWM_S_1970 */    \
         KV_DFLT( KV_TYPE_STRING, IOTC_TELEMETRY_CD_DFLT ), /* CS_IOTC_TELEMETRY_CD */ \
 }
+
 
 #endif /* _KVSTORE_CONFIG_H */
