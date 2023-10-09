@@ -77,6 +77,32 @@ After importing the two demo projects into STM32CubeIDE, decide which one you wi
 #### Building
 In the **Project Explorer** pane of STM32CubeIDE, Right click on the project and select **Build Project**
 
+>Notes:
+
+You must set the **workspace** directory as mentioned in **Step 2** to the directory of this git otherwise this project will not build.
+
+When building there may still be errors reported in the **"Problems"** tab or the **"Console"** tab.
+Errors such as  "_fstat is not implemented and will always fail" are warnings and can be ignored.
+
+If the build has succeeded you should see lines similar to the following:
+
+```
+arm-none-eabi-size   b_u585i_iot02a_ntz.elf 
+arm-none-eabi-objdump -h -S  b_u585i_iot02a_ntz.elf  > "b_u585i_iot02a_ntz.list"
+   text	   data	    bss	    dec	    hex	filename
+ 527780	   2140	 514712	1044632	  ff098	b_u585i_iot02a_ntz.elf
+arm-none-eabi-objcopy  -O ihex  b_u585i_iot02a_ntz.elf  "b_u585i_iot02a_ntz.hex"
+arm-none-eabi-objcopy  -O binary  b_u585i_iot02a_ntz.elf  "b_u585i_iot02a_ntz.bin"
+Finished building: default.size.stdout
+ 
+Finished building: b_u585i_iot02a_ntz.bin 
+Finished building: b_u585i_iot02a_ntz.hex
+Finished building: b_u585i_iot02a_ntz.list
+
+13:01:31 Build Failed. 9 errors, 1145 warnings. (took 8s.144ms)
+```
+
+
 #### Non-TrustZone Project (NTZ)
 Review the README.md file for the [Non TrustZone](Projects/b_u585i_iot02a_ntz) project for more information on the setup and limitations of this demo project.
 
@@ -107,25 +133,9 @@ wifi_ssid="ssidGoesHere"
 > conf set wifi_credential MyWifiPassword
 wifi_credential="MyWifiPassword"
 ```
-#### MQTT Endpoint
-Next, set the mqtt endpoint to the endpoint for your account:
-```
-> conf set mqtt_endpoint xxxxxxxxxxxxxx-ats.iot.us-west-2.amazonaws.com
-mqtt_endpoint="xxxxxxxxxxxxxx-ats.iot.us-west-2.amazonaws.com"
-```
-
-#### Telemetry CD variable
-Next, set the telemetry_cd for your device from the "connection info" link on the device page of IoT-Connect.
-
-This can also be defined manually within the source file of motion_sensors_publish.c.
-
-```
-conf set telemetry_cd XG4EOMA
-telemetry_cd="XG4EOMA"
-```
 
 #### Commit Configuration Changes
-Finally, commit the staged configuration changes to non-volatile memory.
+Commit the staged configuration changes to non-volatile memory.
 ```
 > conf commit
 Configuration saved to NVM.
@@ -183,20 +193,95 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==
 -----END CERTIFICATE-----
 ```
 
-Save the resulting certificate to a new file.
+Save the resulting certificate to a new file, name it devicecert.pem.
+
+
+### Step 5: Register the device with IoTConnect-AWS
+1. Upload the certificate that you saved from the terminal, devicecert.pem at https://awspoc.iotconnect.io/certificate (CA Certificate Individual)
+2. Create a template using **CA certificate Individual** as "Auth Type".
+3. Create a device and select the certicate that you uploaded in "Certificate Authority" and upload the same certificate again in "Device Certificate".
+
+> Note: We will change the device registration method in future.
+
+In the template add attributes for the following, set their types as integers:
+
+```
+accelerometer_x
+accelerometer_y
+accelerometer_z
+gyro_x
+gyro_y
+gyro_z
+```
+
+#### MQTT Endpoint
+Next, set the mqtt endpoint to the endpoint for your account:
+
+This can be found by going to the newly created device's page in IoT-Connect and clicking the "connection info" link. 
+The mqtt endpoint is listed as **# host**.
+
+```
+> conf set mqtt_endpoint xxxxxxxxxxxxxx-ats.iot.us-west-2.amazonaws.com
+mqtt_endpoint="xxxxxxxxxxxxxx-ats.iot.us-west-2.amazonaws.com"
+```
+
+#### Telemetry CD
+Next, set the telemetry_cd for this device, this is a unique 7 or 8 digit alphanumeric code for each device:
+
+```
+conf set telemetry_cd XG4EOMA
+telemetry_cd="XG4EOMA"
+```
+
+This can be found by going your newly created device's page in IoT-Connect and clicking the "connection info" link
+The **Telemetry CD** is found within the mqtt **#pubTopics** and is the value shown as **XG4EOMA** in the
+example below:
+
+```
+ $aws/rules/msg_d2c_rpt/your_device_name/XG4EOMA/2.1/0 
+```
+
+#### Commit Updated Configuration Changes
+Finally, commit the staged configuration changes to non-volatile memory.
+```
+> conf commit
+Configuration saved to NVM.
+```
 
 #### Reset the target device
+
+Reset the device and it shall automatically connect to the WiFi router and AWS MQTT broker based on the configuration set earlier. 
 ```
 > reset
 Resetting device.
 ```
 
-### Step 5: Register the device with IoTConnect-AWS
-1. Upload the certificate that you saved from the terminal in pem format at https://awspoc.iotconnect.io/certificate (CA Certificate Individual)
-2. Create a template using **CA certificate Individual** as "Auth Type".
-3. Create a device and select the certicate that you uploaded in "Certificate Authority" and upload the same certificate again in "Device Certificate".
+When connected the following lines should appear on the CLI
 
-> Note: We will change the device registration method in future.
+```
+<INF>     9574 [MQTTAgent ] Network connection 0x20025538: TLS handshake successful. (mbedtls_transport.c:1367)
+<INF>     9574 [MQTTAgent ] Network connection 0x20025538: Connection to xxxxxxxx-ats.iot.us-east-1.amazonaws.com:8883 established. (mbedtls_transport.c:1374)
+<INF>     9864 [MQTTAgent ] Starting a clean MQTT Session. (mqtt_agent_task.c:1169)
+<INF>    10732 [lwIP      ] Time set to: 2023-10-09T11:56:59.000Z! (time.c:68)
+<INF>    10839 [sntp      ] Time received from NTP. Time now: 2023-10-09T11:56:59.000Z! (time.c:100)
+```
+
+Observe telemetry data is received on the IoT-Connect website in the Device's **Live Data** section.
+
+#### Reset settings to defaults
+
+The settings can be erased with the following command:
+
+```
+> erase
+Erasing QSPI NVM, will reset afterwards.
+```
+
+#### Modifying telemetry update rate.
+
+By default the sensor telemetry is sent every 3 seconds.  This can be altered by changing the
+constant MQTT\_PUBLISH\_PERIOD\_MS in ./Common/app/motion\_sensors\_publish.c.
+
 
 ## Contribution
 See [CONTRIBUTING](https://github.com/FreeRTOS/iot-reference-stm32u5/blob/main/CONTRIBUTING.md) for more information.
@@ -205,3 +290,4 @@ See [CONTRIBUTING](https://github.com/FreeRTOS/iot-reference-stm32u5/blob/main/C
 Source code located in the *Projects*, *Common*, *Middleware/AWS*, and *Middleware/FreeRTOS* directories are available under the terms of the MIT License. See the LICENSE file for more details.
 
 Other libraries located in the *Drivers* and *Middleware* directories are available under the terms specified in each source file.
+
