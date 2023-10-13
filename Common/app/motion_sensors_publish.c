@@ -74,7 +74,6 @@
 // CPID string
 const char *cpId = "dummy_cpid_string";
 #define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
-#define SUB_TOPIC	"iot/%s/cmd"
 #define APP_VERSION "01.00.06"
 
 /**
@@ -276,7 +275,6 @@ void vMotionSensorsPublish( void * pvParameters )
     char * pcTelemetryCd = NULL;
     int lTopicLen = 0;
 
-
     xResult = xInitSensors();
 
     if( xResult != pdTRUE )
@@ -286,7 +284,6 @@ void vMotionSensorsPublish( void * pvParameters )
     }
 
     pcDeviceId = KVStore_getStringHeap( CS_CORE_THING_NAME, NULL );
-
     pcTelemetryCd = KVStore_getStringHeap( CS_IOTC_TELEMETRY_CD, NULL );
 
     if (pcTelemetryCd == NULL) {
