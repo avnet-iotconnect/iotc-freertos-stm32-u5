@@ -38,6 +38,10 @@
 #include "task.h"
 #include "queue.h"
 
+#define LOG_LEVEL    LOG_INFO
+
+#include "logging.h"
+
 /* NVM config includes */
 #include "kvstore.h"
 
@@ -46,6 +50,11 @@
 #include "core_mqtt_agent.h"
 #include "mqtt_agent_task.h"
 #include "subscription_manager.h"
+
+#include "iotconnect_lib.h"
+#include "iotconnect_event.h"
+
+#include "cJSON.h"
 
 /**
  * @brief Format of topic string used to subscribe to incoming messages.
@@ -57,9 +66,27 @@
 #endif
 
 /**
+ * @brief Publish topic for device to cloud acknowledgements
+ */
+#define ACK_PUBLISH_TOPIC_FORMAT	"$aws/rules/msg_d2c_ack/%s/%s/2.1/6"
+
+//AWS:   Ack: $aws/rules/msg_d2c_ack/<device_id>/<telemetry_cd>/2.1/6
+//Azure: Ack: devices/<device_id>/messages/events/cd=<xxxxxxxx>&v=2.1&mt=6
+
+/*
+ * @brief Queue size of acknowledgements offloaded to the vMQTTSubscribeTask
+ */
+#define ACK_MSG_Q_SIZE	5
+
+/**
  * @brief length of buffer to hold subscribe topic string containing the device id (thing_name)
  */
 #define MQTT_SUBSCRIBE_TOPIC_STR_LEN           	( 256 )
+
+/**
+ * @brief length of buffer to hold publish topic string of acknowledgements
+ */
+#define MQTT_ACK_PUBLISH_TOPIC_STR_LEN			( 256 )
 
 /**
  * @brief Size of statically allocated buffers for holding payloads.
@@ -116,11 +143,87 @@ extern MQTTAgentContext_t xGlobalMqttAgentContext;
  */
 static MQTTAgentHandle_t xMQTTAgentHandle = NULL;
 
+/**
+ *  @brief Handle to message queue of acknowledgements offloaded onto vMQTTSubscribeTask.
+ */
+static QueueHandle_t mqtt_ack_queue = NULL;
+
+
+/**
+ *
+ */
+BaseType_t mqttcore_send_message(const char *buf)
+{
+    BaseType_t status;
+
+    size_t msg_buf_size = strlen(buf) + 1;
+    char *msg_buf = NULL;
+
+    msg_buf = malloc(msg_buf_size);
+
+    if (!msg_buf) {
+        LogError("failed to allocate msg_buf!");
+    	return -1;
+    }
+
+    strcpy(msg_buf, buf);
+
+    status = xQueueSendToBack(mqtt_ack_queue, &msg_buf, 10);
+
+    if(status != pdTRUE) {
+        free(msg_buf);
+    }
+
+    return status;
+}
+
+/**
+ *
+ */
+void iotconnect_sdk_send_packet(const char *data) {
+    if (mqttcore_send_message(data) != pdTRUE) {
+        LogInfo("IOTC: Failed to send message %s\r\n", data);
+    }
+}
+
+/**
+ *
+ */
+void command_status(IotclEventData data, bool status, const char *command_name, const char *message) {
+    LogInfo ("command status");
+    vTaskDelay(100);
+
+    const char *ack = iotcl_create_ack_string_and_destroy_event(data, status, message);
+    LogInfo("command: %s status=%s: %s\r\n", command_name, status ? "OK" : "Failed", message);
+    LogInfo("Sent CMD ack: %s\r\n", ack);
+    iotconnect_sdk_send_packet(ack);
+    free((void*) ack);
+}
+
+/**
+ *
+ */
+void on_command(IotclEventData data) {
+    LogInfo ("on_command callback");
+    vTaskDelay(100);
+
+    // TODO : implement command with ack, no ack and error codes.
+    // TODO: set/clear led commands
+    // Perhaps return error if already set or already cleared.
+
+	char *command = iotcl_clone_command(data);
+    if (NULL != command) {
+        command_status(data, false, command, "Not implemented");
+        free((void*) command);
+    } else {
+        command_status(data, true, command, "command did something");
+    }
+}
+
 
 /*-----------------------------------------------------------*/
 
-static void prvIncomingPublishCallback( void * pvIncomingPublishCallbackContext,
-                                        MQTTPublishInfo_t * pxPublishInfo )
+static void prvIncomingPublishCallback( void * pvIncomingPublishCallbackContext, MQTTPublishInfo_t * pxPublishInfo )
 {
     static char cTerminatedString[ confgPAYLOAD_BUFFER_LENGTH ];
 
@@ -128,24 +231,24 @@ static void prvIncomingPublishCallback( void * pvIncomingPublishCallbackContext,
 
     /* Create a message that contains the incoming MQTT payload to the logger,
      * terminating the string first. */
-    if( pxPublishInfo->payloadLength < confgPAYLOAD_BUFFER_LENGTH )
-    {
+    if( pxPublishInfo->payloadLength < confgPAYLOAD_BUFFER_LENGTH ) {
         memcpy( ( void * ) cTerminatedString, pxPublishInfo->pPayload, pxPublishInfo->payloadLength );
         cTerminatedString[ pxPublishInfo->payloadLength ] = 0x00;
-    }
-    else
-    {
+    } else {
         memcpy( ( void * ) cTerminatedString, pxPublishInfo->pPayload, confgPAYLOAD_BUFFER_LENGTH );
         cTerminatedString[ confgPAYLOAD_BUFFER_LENGTH - 1 ] = 0x00;
     }
 
     LogInfo( ( "Received incoming publish message %s", cTerminatedString ) );
+
+    if (! iotcl_process_event(cTerminatedString)) {
+        LogError ( "Failed to process event message" );
+    }
 }
 
 /*-----------------------------------------------------------*/
 
-static MQTTStatus_t prvSubscribeToTopic( MQTTQoS_t xQoS,
-                                         char * pcTopicFilter )
+static MQTTStatus_t prvSubscribeToTopic( MQTTQoS_t xQoS, char *pcTopicFilter )
 {
     MQTTStatus_t xMQTTStatus;
 
@@ -161,12 +264,9 @@ static MQTTStatus_t prvSubscribeToTopic( MQTTQoS_t xQoS,
                                                prvIncomingPublishCallback,
                                                NULL );
 
-        if( xMQTTStatus != MQTTSuccess )
-        {
+        if( xMQTTStatus != MQTTSuccess ) {
             LogError( ( "Failed to SUBSCRIBE to topic with error = %u.", xMQTTStatus ) );
-        }
-        else
-        {
+        } else {
             LogInfo( ( "Subscribed to topic %.*s.\n\n", strlen( pcTopicFilter ), pcTopicFilter ) );
         }
     } while( xMQTTStatus != MQTTSuccess );
@@ -178,50 +278,106 @@ static MQTTStatus_t prvSubscribeToTopic( MQTTQoS_t xQoS,
 
 void vMQTTSubscribeTask( void * pvParameters )
 {
-    BaseType_t xStatus = pdPASS;
-    MQTTStatus_t xMQTTStatus;
-
-    char pcSubTopicString[ MQTT_SUBSCRIBE_TOPIC_STR_LEN ] = { 0 };
-    char * pcDeviceId = NULL;
-    int lSubTopicLen = 0;
-
     ( void ) pvParameters;
 
-    vSleepUntilMQTTAgentReady();
+    IotclConfig *iot_config;
+	BaseType_t xStatus = pdPASS;
+    MQTTStatus_t xMQTTStatus;
+    char pcSubTopicString[ MQTT_SUBSCRIBE_TOPIC_STR_LEN ] = { 0 };
+    char * pcDeviceId = NULL;
+    char * pcTelemetryCd = NULL;
+    int lSubTopicLen = 0;
+    int lAckPubTopicLen = 0;
+    int ret;
+    char *pcAckMsgBuf;
+    char pcAckPubTopicString[ MQTT_ACK_PUBLISH_TOPIC_STR_LEN ] = { 0 };;
+    size_t lAckMsgLen;
 
+    vSleepUntilMQTTAgentReady();
     xMQTTAgentHandle = xGetMqttAgentHandle();
     configASSERT( xMQTTAgentHandle != NULL );
-
     vSleepUntilMQTTAgentConnected();
 
     LogInfo( ( "MQTT Agent is connected. Starting the subscribe task. " ) );
 
-    if( xStatus == pdPASS )
-    {
-        pcDeviceId = KVStore_getStringHeap( CS_CORE_THING_NAME, NULL );
+    // message queue init
+    mqtt_ack_queue = xQueueCreate(ACK_MSG_Q_SIZE, sizeof(char *));
+    if (mqtt_ack_queue == NULL) {
+        LogError("Failed to create Ack message queue");
+		vTaskDelete( NULL );
+    }
 
-        if (pcDeviceId == NULL) {
-            LogError( "Error getting the thing_name setting." );
-            vTaskDelete( NULL );
+
+    iot_config = iotcl_get_config();
+
+	pcDeviceId = iot_config->device.duid;
+	pcTelemetryCd = iot_config->telemetry.cd;
+
+	if (pcDeviceId == NULL) {
+		LogError( "Error getting the thing_name setting." );
+		vTaskDelete( NULL );
+	} else {
+		lSubTopicLen = snprintf( pcSubTopicString, ( size_t ) MQTT_SUBSCRIBE_TOPIC_STR_LEN, SUBSCRIBE_TOPIC_FORMAT, pcDeviceId);
+	}
+
+	if( ( lSubTopicLen <= 0 ) || ( lSubTopicLen > MQTT_SUBSCRIBE_TOPIC_STR_LEN) ) {
+		LogError( "Error while constructing subscribe topic string." );
+		vTaskDelete( NULL );
+	}
+
+	if (pcTelemetryCd == NULL) {
+		LogError( "Error getting the telemetry_cd setting." );
+		vTaskDelete( NULL );
+	} else {
+		lAckPubTopicLen = snprintf( pcAckPubTopicString, ( size_t ) MQTT_ACK_PUBLISH_TOPIC_STR_LEN, ACK_PUBLISH_TOPIC_FORMAT, pcDeviceId, pcTelemetryCd);
+	}
+
+	if( ( lAckPubTopicLen <= 0 ) || ( lAckPubTopicLen > MQTT_ACK_PUBLISH_TOPIC_STR_LEN) ) {
+		LogError( "Error while constructing ack publsh topic string, len: %d.", lAckPubTopicLen );
+		vTaskDelete( NULL );
+	}
+
+	xMQTTStatus = prvSubscribeToTopic( MQTTQoS1, pcSubTopicString);
+
+	if( xMQTTStatus != MQTTSuccess ) {
+		LogError( "Failed to subscribe to topic: %s.", pcSubTopicString );
+		xStatus = pdFAIL;
+	}
+
+    LogInfo ( "Subscribed to: %s", pcSubTopicString );
+    LogInfo ( "Ack Publish to: %s", pcSubTopicString );
+
+
+    // message queue init
+    while (1) {
+        xStatus = xQueueReceive(mqtt_ack_queue, &pcAckMsgBuf, portMAX_DELAY);
+        if (xStatus != pdPASS) {
+            LogError("[%s] Q recv error (%d)\r\n", __func__, xStatus);
+            break;
+        }
+
+        LogInfo ("Received something in ack queue");
+
+        if (pcAckMsgBuf) {
+        	LogInfo ("Publishing command: %s", pcAckMsgBuf);
+
+        	lAckMsgLen = strlen(pcAckMsgBuf);
+
+        	ret = prvPublishAndWaitForAck(xMQTTAgentHandle,
+        								  pcAckPubTopicString,
+        	                              pcAckMsgBuf,
+        	                              lAckMsgLen);
+
+            if (ret != 0) {
+                LogError("Sending a message failed\n");
+            }
+
+            // allocated in _mqtt_send_to_q()
+            free(pcAckMsgBuf);
         } else {
-        	lSubTopicLen = snprintf( pcSubTopicString, ( size_t ) MQTT_SUBSCRIBE_TOPIC_STR_LEN, SUBSCRIBE_TOPIC_FORMAT, pcDeviceId);
-        }
-
-        if( ( lSubTopicLen <= 0 ) || ( lSubTopicLen > MQTT_SUBSCRIBE_TOPIC_STR_LEN) )
-        {
-            LogError( "Error while constructing subscribe topic string." );
-            vTaskDelete( NULL );
-        }
-
-        xMQTTStatus = prvSubscribeToTopic( MQTTQoS1, pcSubTopicString);
-
-        if( xMQTTStatus != MQTTSuccess )
-        {
-            LogError( "Failed to subscribe to topic: %s.", pcSubTopicString );
-            xStatus = pdFAIL;
+            LogError("[%s] can't send a NULL user_msg_buf\r\n", __func__);
         }
     }
 
-    LogInfo ( "Subscribed to: %s", pcSubTopicString );
     vTaskDelete( NULL );
 }

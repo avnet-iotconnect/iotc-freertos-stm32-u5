@@ -47,6 +47,14 @@
 
 #include "cli/cli.h"
 
+//Iotconnect
+#include "iotconnect_lib.h"
+#include "iotconnect_telemetry.h"
+#include "iotconnect_event.h"
+
+extern void on_command(IotclEventData data);
+
+
 /* Definition for Qualification Test */
 #if ( DEVICE_ADVISOR_TEST_ENABLED == 1 ) || ( MQTT_TEST_ENABLED == 1 ) || ( TRANSPORT_INTERFACE_TEST_ENABLED == 1 ) || \
     ( OTA_PAL_TEST_ENABLED == 1 ) || ( OTA_E2E_TEST_ENABLED == 1 ) || ( CORE_PKCS11_TEST_ENABLED == 1 )
@@ -203,6 +211,9 @@ void vInitTask( void * pvArgs )
 {
     BaseType_t xResult;
     int xMountStatus;
+    char * pcDeviceId = NULL;
+    char * pcTelemetryCd = NULL;
+    char *cpId = "dummy_cpid_string";
 
     ( void ) pvArgs;
 
@@ -226,6 +237,34 @@ void vInitTask( void * pvArgs )
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
         KVStore_init();
+
+        IotclConfig iot_config;
+
+        cpId = "dummy_value";
+        pcDeviceId = KVStore_getStringHeap( CS_CORE_THING_NAME, NULL );
+        pcTelemetryCd = KVStore_getStringHeap( CS_IOTC_TELEMETRY_CD, NULL );
+
+        memset (&iot_config, 0, sizeof iot_config);
+
+        if (pcTelemetryCd != NULL && pcDeviceId != NULL) {
+            iot_config.device.cpid = cpId;
+            iot_config.device.duid = pcDeviceId;
+            iot_config.device.env = "poc";
+            iot_config.telemetry.cd = pcTelemetryCd;
+            iot_config.telemetry.dtg = NULL;
+
+
+
+            //    config->status_cb = on_connection_status;
+			iot_config.event_functions.ota_cb = NULL;
+			iot_config.event_functions.cmd_cb = on_command;
+            iot_config.event_functions.msg_cb = NULL;
+
+
+            iotcl_init_v2(&iot_config);
+        } else {
+        	LogInfo ("IOTC configuration, deviceId or TelemetryId not set");
+        }
     }
     else
     {

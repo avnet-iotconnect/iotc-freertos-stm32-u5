@@ -72,7 +72,6 @@
  */
 
 // CPID string
-const char *cpId = "dummy_cpid_string";
 #define PUB_TOPIC_FORMAT	"devices/%s/messages/events/"
 #define APP_VERSION "01.00.06"
 
@@ -126,7 +125,7 @@ static void prvPublishCommandCallback( MQTTAgentCommandContext_t * pxCommandCont
 
 /*-----------------------------------------------------------*/
 
-static BaseType_t prvPublishAndWaitForAck( MQTTAgentHandle_t xAgentHandle,
+BaseType_t prvPublishAndWaitForAck( MQTTAgentHandle_t xAgentHandle,
                                            const char * pcTopic,
                                            const void * pvPublishData,
                                            size_t xPublishDataLen )
@@ -274,6 +273,7 @@ void vMotionSensorsPublish( void * pvParameters )
     char * pcDeviceId = NULL;
     char * pcTelemetryCd = NULL;
     int lTopicLen = 0;
+    IotclConfig *iot_config;
 
     xResult = xInitSensors();
 
@@ -283,41 +283,31 @@ void vMotionSensorsPublish( void * pvParameters )
         vTaskDelete( NULL );
     }
 
-    pcDeviceId = KVStore_getStringHeap( CS_CORE_THING_NAME, NULL );
-    pcTelemetryCd = KVStore_getStringHeap( CS_IOTC_TELEMETRY_CD, NULL );
-
-    if (pcTelemetryCd == NULL) {
-        LogError( "Error getting the telemetry_cd setting." );
-        vTaskDelete( NULL );
-    }
-
-    if( pcDeviceId == NULL || pcTelemetryCd == NULL)
-    {
-        xExitFlag = pdTRUE;
-    }
-    else
-    {
-    	lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId);
-    }
-
-    if( ( lTopicLen <= 0 ) || ( lTopicLen > MQTT_PUBLICH_TOPIC_STR_LEN ) )
-    {
-        LogError( "Error while constructing topic string." );
-        vTaskDelete( NULL );
-    }
-
     vSleepUntilMQTTAgentReady();
     xAgentHandle = xGetMqttAgentHandle();
 
-    IotclConfig iot_config;
-    memset (&iot_config, 0, sizeof iot_config);
+    iot_config = iotcl_get_config();
 
-    iot_config.device.cpid = cpId;
-    iot_config.device.duid = pcDeviceId;
-    iot_config.device.env = "poc";
-    iot_config.telemetry.cd = pcTelemetryCd;
-    iot_config.telemetry.dtg = NULL;
-    iotcl_init_v2(&iot_config);
+    if (iot_config == NULL) {
+        LogError( "Sensor publish task, could not get iotconfig" );
+        vTaskDelete( NULL );
+    }
+
+    pcDeviceId =  iot_config->device.duid;
+    pcTelemetryCd = iot_config->telemetry.cd;
+
+    if (pcDeviceId == NULL || pcTelemetryCd == NULL) {
+        LogError( "iot config uninintialized, cannot create topic and telemetry cd." );
+        vTaskDelete( NULL );
+    }
+
+    lTopicLen = snprintf( pcTopicString, ( size_t ) MQTT_PUBLICH_TOPIC_STR_LEN, PUB_TOPIC_FORMAT, pcDeviceId);
+
+    if( ( lTopicLen <= 0 ) || ( lTopicLen > MQTT_PUBLICH_TOPIC_STR_LEN ) )
+	{
+		LogError( "Error while constructing topic string." );
+		vTaskDelete( NULL );
+	}
 
     while (1)
     {
