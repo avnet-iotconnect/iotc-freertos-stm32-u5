@@ -4,10 +4,10 @@
  * Creation: 05/10/23.
  */
 
+#include "sntp.h"
 #include <time.h>
 #include "FreeRTOS.h"
 #include "task.h"
-#include "sntp.h"
 #include "iotconnect_common.h"
 #include "stdint.h"
 #include "stdbool.h"
@@ -24,8 +24,8 @@
 #define IOTC_MTB_TIME_MAX_TRIES 			10
 #endif
 
-static bool 	callback_received = false;	/* Indicate we have received a response and that the time has been set */
-static time_t 	timenow = 0;
+static volatile bool callback_received = false;	/* Indicate we have received a response and that the time has been set */
+static time_t timenow = 0;
 static uint32_t	unix_time_base;				/* System clock time offset for UTC.  */
 
 /*
@@ -100,6 +100,13 @@ int iotc_stm_aws_time_obtain(const char *server)
     LogInfo("Time received from NTP. Time now: %s!\n", iotcl_to_iso_timestamp(timenow));
 
     return 0;
+}
+
+
+
+bool is_sntp_time_synced(void)
+{
+	return callback_received;
 }
 
 

@@ -38,22 +38,17 @@
 #include "kvstore.h"
 #include "hw_defs.h"
 #include <string.h>
-
 #include "lfs.h"
 #include "fs/lfs_port.h"
 #include "stm32u5xx_ll_rng.h"
-
 #include "test_execution_config.h"
-
 #include "cli/cli.h"
+#include "awsrtos_time.h"
 
-//Iotconnect
-#include "iotconnect_lib.h"
-#include "iotconnect_telemetry.h"
-#include "iotconnect_event.h"
 
-extern void on_command(IotclEventData data);
-
+/*	Number of polls and interval between polls to check if sntp time has synced */
+#define SNTP_SYNC_POLL_MAX 10
+#define SNTP_SYNC_POLL_INTERVAL_MS	1000
 
 /* Definition for Qualification Test */
 #if ( DEVICE_ADVISOR_TEST_ENABLED == 1 ) || ( MQTT_TEST_ENABLED == 1 ) || ( TRANSPORT_INTERFACE_TEST_ENABLED == 1 ) || \
@@ -68,6 +63,13 @@ extern void on_command(IotclEventData data);
 static lfs_t * pxLfsCtx = NULL;
 
 EventGroupHandle_t xSystemEvents = NULL;
+
+
+extern void net_main( void * pvParameters );
+extern void sntp_task( void * );
+extern void iotconnect_app( void * );
+extern void otaPal_EarlyInit( void );
+
 
 lfs_t * pxGetDefaultFsCtx( void )
 {
@@ -178,42 +180,10 @@ static void vRelocateVectorTable( void )
 }
 
 
-static void vHeartbeatTask( void * pvParameters )
-{
-    ( void ) pvParameters;
-
-    HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
-    HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
-
-    while( 1 )
-    {
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-        HAL_GPIO_TogglePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin );
-    }
-}
-
-extern void net_main( void * pvParameters );
-extern void sntp_task( void * );
-extern void vMQTTAgentTask( void * );
-extern void vMotionSensorsPublish( void * );
-extern void vMQTTSubscribeTask( void * );
-extern void vEnvironmentSensorPublishTask( void * );
-extern void vShadowDeviceTask( void * );
-extern void vOTAUpdateTask( void * pvParam );
-extern void vDefenderAgentTask( void * );
-#if DEMO_QUALIFICATION_TEST
-extern void run_qualification_main( void * );
-#endif /* DEMO_QUALIFICATION_TEST */
-
-extern void otaPal_EarlyInit( void );
-
 void vInitTask( void * pvArgs )
 {
     BaseType_t xResult;
     int xMountStatus;
-    char * pcDeviceId = NULL;
-    char * pcTelemetryCd = NULL;
-    char *cpId = "dummy_cpid_string";
 
     ( void ) pvArgs;
 
@@ -237,76 +207,43 @@ void vInitTask( void * pvArgs )
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
         KVStore_init();
-
-        IotclConfig iot_config;
-
-        cpId = "dummy_value";
-        pcDeviceId = KVStore_getStringHeap( CS_CORE_THING_NAME, NULL );
-        pcTelemetryCd = KVStore_getStringHeap( CS_IOTC_TELEMETRY_CD, NULL );
-
-        memset (&iot_config, 0, sizeof iot_config);
-
-        if (pcTelemetryCd != NULL && pcDeviceId != NULL) {
-            iot_config.device.cpid = cpId;
-            iot_config.device.duid = pcDeviceId;
-            iot_config.device.env = "poc";
-            iot_config.telemetry.cd = pcTelemetryCd;
-            iot_config.telemetry.dtg = NULL;
-
-
-
-            //    config->status_cb = on_connection_status;
-			iot_config.event_functions.ota_cb = NULL;
-			iot_config.event_functions.cmd_cb = on_command;
-            iot_config.event_functions.msg_cb = NULL;
-
-
-            iotcl_init_v2(&iot_config);
-        } else {
-        	LogInfo ("IOTC configuration, deviceId or TelemetryId not set");
-        }
     }
     else
     {
         LogError( "Failed to mount filesystem." );
     }
 
+
     ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
-    xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
-    configASSERT( xResult == pdTRUE );
+//    xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
+//    configASSERT( xResult == pdTRUE );
 
     xResult = xTaskCreate( &net_main, "MxNet", 1024, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
 
+    ( void ) xEventGroupWaitBits( xSystemEvents,
+                                  EVT_MASK_NET_CONNECTED,
+                                  0x00,
+                                  pdTRUE,
+                                  portMAX_DELAY );
+
+    HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
+    HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
+
     xResult = xTaskCreate( &sntp_task, "sntp", 4096, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
 
-#if DEMO_QUALIFICATION_TEST
-    xResult = xTaskCreate( run_qualification_main, "QualTest", 4096, NULL, 10, NULL );
+    for (int t=0; t < SNTP_SYNC_POLL_MAX; t++) {
+    	if (is_sntp_time_synced()) {
+    		break;
+    	}
+
+    	vTaskDelay(pdMS_TO_TICKS(SNTP_SYNC_POLL_INTERVAL_MS));
+    }
+
+    xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 2048, NULL, 5, NULL );
     configASSERT( xResult == pdTRUE );
-#else
-    xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 4096, NULL, 10, NULL );
-    configASSERT( xResult == pdTRUE );
-
-//    xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
-//    configASSERT( xResult == pdTRUE );
-
-//    xResult = xTaskCreate( vEnvironmentSensorPublishTask, "EnvSense", 1024, NULL, 6, NULL );
-//    configASSERT( xResult == pdTRUE );
-
-    xResult = xTaskCreate( vMotionSensorsPublish, "MotionS", 2048, NULL, 5, NULL );
-    configASSERT( xResult == pdTRUE );
-
-    xResult = xTaskCreate( vMQTTSubscribeTask, "Subsribe", 2048, NULL, 5, NULL );
-    configASSERT( xResult == pdTRUE );
-
-//    xResult = xTaskCreate( vShadowDeviceTask, "ShadowDevice", 1024, NULL, 5, NULL );
-//    configASSERT( xResult == pdTRUE );
-
-//    xResult = xTaskCreate( vDefenderAgentTask, "AWSDefender", 2048, NULL, 5, NULL );
-//    configASSERT( xResult == pdTRUE );
-#endif /* DEMO_QUALIFICATION_TEST */
 
     while( 1 )
     {

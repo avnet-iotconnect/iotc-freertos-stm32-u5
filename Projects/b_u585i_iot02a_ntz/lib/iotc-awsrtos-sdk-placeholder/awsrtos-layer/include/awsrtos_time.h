@@ -9,5 +9,7 @@
 #define AWS_FREERTOS_TIME_TIME_H_
 
 
+bool is_sntp_time_synced(void);
+
 
 #endif /* AWS_FREERTOS_TIME_TIME_H_ */

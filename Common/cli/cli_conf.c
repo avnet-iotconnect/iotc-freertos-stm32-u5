@@ -88,6 +88,11 @@ static void vSubCommand_GetConfig( ConsoleIO_t * pxCIO,
     KVStoreKey_t xKey = kvStringToKey( pcKey );
     KVStoreValueType_t xKvType = KVStore_getType( xKey );
 
+    if (strcmp("wifi_credential", pcKey) == 0) {
+        pxCIO->print( "wifi_credential=\"************\"\r\n");
+        return;
+    }
+
     int32_t lResponseLen = 0;
 
     switch( xKvType )
@@ -215,7 +220,7 @@ static void vSubCommand_GetConfigAll( ConsoleIO_t * pxCIO )
 {
     for( KVStoreKey_t key = 0; key < CS_NUM_KEYS; key++ )
     {
-        vSubCommand_GetConfig( pxCIO, kvStoreKeyMap[ key ] );
+    	vSubCommand_GetConfig( pxCIO, kvStoreKeyMap[ key ] );
     }
 }
 
