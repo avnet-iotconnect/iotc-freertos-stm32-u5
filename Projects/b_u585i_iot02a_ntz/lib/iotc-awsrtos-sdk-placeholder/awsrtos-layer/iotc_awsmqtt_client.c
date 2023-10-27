@@ -168,9 +168,9 @@ int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrt
     configASSERT( xMQTTAgentHandle != NULL );
     vSleepUntilMQTTAgentConnected();
 
-    LogInfo( ( "MQTT Agent is connected. Starting the subscribe task. " ) );
+    LogInfo( ( "MQTT Agent is connected. subscribing to topic" ) );
 
-	xMQTTStatus = subscribe_to_topic(MQTTQoS1, pcSubTopicString);
+	xMQTTStatus = subscribe_to_topic(MQTTQoS1, pcSubTopicString);	// Deliver at least once
 
 	if( xMQTTStatus != MQTTSuccess ) {
 		LogError( "Failed to subscribe to topic: %s.", pcSubTopicString );
@@ -415,9 +415,9 @@ static MQTTStatus_t subscribe_to_topic( MQTTQoS_t xQoS, char *pcTopicFilter )
         if( xMQTTStatus != MQTTSuccess ) {
             LogError( ( "Failed to SUBSCRIBE to topic with error = %u.", xMQTTStatus ) );
         } else {
-            LogInfo( ( "Subscribed to topic %.*s.\n\n", strlen( pcTopicFilter ), pcTopicFilter ) );
+            LogInfo( ( "Subscribed to topic %s.\n\n", pcTopicFilter ) );
         }
-    } while( xMQTTStatus != MQTTSuccess );
+    } while( xMQTTStatus != MQTTSuccess);
 
     return xMQTTStatus;
 }

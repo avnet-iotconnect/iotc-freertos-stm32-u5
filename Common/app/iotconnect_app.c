@@ -26,12 +26,8 @@
 
 #include "logging_levels.h"
 /* define LOG_LEVEL here if you want to modify the logging level from the default */
-
-//#define LOG_LEVEL    LOG_ERROR
 #define LOG_LEVEL    LOG_INFO
-
 #include "logging.h"
-
 
 /* Standard includes. */
 #include <string.h>
@@ -47,7 +43,6 @@
 #include "kvstore.h"
 
 #include "sys_evt.h"
-
 
 /* MQTT library includes. */
 #include "core_mqtt.h"
@@ -68,6 +63,10 @@
 #include "iotconnect_telemetry.h"
 #include "iotconnect_event.h"
 
+// BSP-Specific
+#include "stm32u5xx.h"
+#include "b_u585i_iot02a.h"
+
 
 // @brief	Version string in telemetry data
 #define APP_VERSION "01.00.06"
@@ -84,7 +83,6 @@
 
 // @brief	IOTConnect configuration defined by application
 static IotConnectAwsrtosConfig awsrtos_config;
-
 
 // Prototypes
 static BaseType_t init_sensors( void );
@@ -243,20 +241,43 @@ static char *create_telemetry_json(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axe
 /* @brief	Callback when a a cloud-to-device command is received on the subscribed MQTT topic
  */
 static void on_command(IotclEventData data) {
-    // TODO : implement command with ack, no ack and error codes.
-    // TODO: set/clear led commands
-    // Perhaps return error if already set or already cleared.
+	if (data == NULL ) {
+		LogWarn("on_command called with data = NULL");
+		return;
+	}
 
-	char *command = iotcl_clone_command(data);							// in iotc-c-lib iotconnect_event.c
+	char *command = iotcl_clone_command(data);
+
+#if 1
     if (NULL != command) {
-        command_status(data, false, command, "Not implemented");
+    	command_status(data, true, command, "OK");
+    } else {
+        command_status(data, false, "?", "Internal error");
+    }
+#else
+    if (NULL != command) {
+    	if(NULL != strstr(command, "led-red") ) {
+			if (NULL != strstr(command, "on")) {
+				BSP_LED_On(LED_RED);
+			} else {
+				BSP_LED_Off(LED_RED);
+			}
+			command_status(data, true, command, "OK");
+		} else if(NULL != strstr(command, "led-green") ) {
+			if (NULL != strstr(command, "on")) {
+				BSP_LED_On(LED_GREEN);
+			} else {
+				BSP_LED_Off(LED_GREEN);
+			}
+			command_status(data, true, command, "OK");
+		} else {
+			command_status(data, false, command, "Not implemented");
+		}
         free((void*) command);
     } else {
-        command_status(data, true, command, "command did something");
-
-        LogInfo ("Command : *** TOGGLE LED ***");
-        HAL_GPIO_TogglePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin );
+        command_status(data, false, "?", "Internal error");
     }
+#endif
 }
 
 
@@ -273,6 +294,7 @@ static void command_status(IotclEventData data, bool status, const char *command
 
 	LogInfo("command: %s status=%s: %s\r\n", command_name, status ? "OK" : "Failed", message);
 	LogInfo("Sent CMD ack: %s\r\n", ack);
+	vTaskDelay(100);
 	iotconnect_sdk_send_packet(ack);
 	free((void*) ack);
 }
