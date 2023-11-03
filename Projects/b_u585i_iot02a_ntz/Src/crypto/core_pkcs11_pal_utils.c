@@ -51,6 +51,7 @@
 #define pkcs11palFILE_NAME_CLAIM_CERTIFICATE     "corePKCS11_Claim_Certificate.dat" /**< The file name of the Provisioning Claim Certificate object. */
 #define pkcs11palFILE_NAME_CLAIM_KEY             "corePKCS11_Claim_Key.dat"         /**< The file name of the Provisioning Claim Key object. */
 #define pkcs11palFILE_NAME_CA_CERTIFICATE        "corePKCS11_CA_Certificate.dat"    /**< The file name of the CA Certificate object. */
+#define pkcs11palFILE_NAME_GODADDY_CA_CERT       "corePKCS11_GoDaddy_CA_Cert.dat"   /**< The file name of the Go-daddy CA Certificate object. */
 
 
 void PAL_UTILS_LabelToFilenameHandle( const char * pcLabel,
@@ -121,6 +122,13 @@ void PAL_UTILS_LabelToFilenameHandle( const char * pcLabel,
         {
             *pcFileName = pkcs11palFILE_NAME_CA_CERTIFICATE;
             *pHandle = ( CK_OBJECT_HANDLE ) eAwsCaCertificate;
+        }
+        else if( 0 == strncmp( pkcs11_GODADDY_CA_CERT_LABEL,
+                               pcLabel,
+                               sizeof( pkcs11_GODADDY_CA_CERT_LABEL ) ) )
+        {
+            *pcFileName = pkcs11palFILE_NAME_GODADDY_CA_CERT;
+            *pHandle = ( CK_OBJECT_HANDLE ) eGoDaddyCaCertificate;
         }
         else
         {
@@ -196,6 +204,11 @@ CK_RV PAL_UTILS_HandleToFilename( CK_OBJECT_HANDLE xHandle,
 
             case eAwsCaCertificate:
                 *pcFileName = pkcs11palFILE_NAME_CA_CERTIFICATE;
+                *pIsPrivate = CK_FALSE;
+                break;
+
+            case eGoDaddyCaCertificate:
+                *pcFileName = pkcs11palFILE_NAME_GODADDY_CA_CERT;
                 *pIsPrivate = CK_FALSE;
                 break;
 

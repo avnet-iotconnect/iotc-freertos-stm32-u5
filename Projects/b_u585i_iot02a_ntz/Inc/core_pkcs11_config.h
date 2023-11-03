@@ -187,4 +187,8 @@
 #define pkcs11_ROOT_CA_CERT_LABEL                          "root_ca_cert"
 #define pkcs11configLABEL_ROOT_CERTIFICATE                 ( pkcs11_ROOT_CA_CERT_LABEL )
 
+#define pkcs11_GODADDY_CA_CERT_LABEL                          "godaddy_ca_cert"
+#define pkcs11configLABEL_GODADDY_CERTIFICATE                 ( pkcs11_GODADDY_CA_CERT_LABEL )
+
+
 #endif /* _CORE_PKCS11_CONFIG_H_ */

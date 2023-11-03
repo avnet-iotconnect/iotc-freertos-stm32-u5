@@ -72,6 +72,26 @@
 			<locationURI>WORKSPACE_LOC/Drivers/BSP/Components/lsm6dso</locationURI>
 		</link>
 		<link>
+			<name>Libraries/.git</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.git</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.gitignore</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.gitignore</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.gitmodules</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.gitmodules</locationURI>
+		</link>
+		<link>
 			<name>Libraries/CMSIS</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -105,6 +125,11 @@
 			<name>Libraries/backoffAlgorithm</name>
 			<type>2</type>
 			<locationURI>WORKSPACE_LOC/Middleware/FreeRTOS/backoffAlgorithm/source</locationURI>
+		</link>
+		<link>
+			<name>Libraries/coreHTTP</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP</locationURI>
 		</link>
 		<link>
 			<name>Libraries/coreJSON</name>
@@ -170,6 +195,26 @@
 			<name>Libraries/tinycbor</name>
 			<type>2</type>
 			<locationURI>WORKSPACE_LOC/Middleware/tinycbor/src</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github/CONTRIBUTING.md</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.github/CONTRIBUTING.md</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github/memory_statistics_config.json</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.github/memory_statistics_config.json</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github/workflows</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>Libraries/CMSIS/core</name>
@@ -405,6 +450,56 @@
 			<name>Libraries/freertos_kernel/timers.c</name>
 			<type>1</type>
 			<locationURI>WORKSPACE_LOC/Middleware/FreeRTOS/kernel/timers.c</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/cmock</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/coverity</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github/workflows/ci.yml</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.github/workflows/ci.yml</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github/workflows/doxygen.yml</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.github/workflows/doxygen.yml</locationURI>
+		</link>
+		<link>
+			<name>Libraries/.github/workflows/release.yml</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.github/workflows/release.yml</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/cmock/coverage.cmake</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/tools/cmock/coverage.cmake</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/cmock/create_test.cmake</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/tools/cmock/create_test.cmake</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/cmock/project.yml</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/tools/cmock/project.yml</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/coverity/README.md</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/tools/coverity/README.md</locationURI>
+		</link>
+		<link>
+			<name>Libraries/tools/coverity/misra.config</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/tools/coverity/misra.config</locationURI>
 		</link>
 	</linkedResources>
 	<filteredResources>
