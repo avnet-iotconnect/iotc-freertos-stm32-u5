@@ -1,17 +1,4 @@
 /*
- * sntp.c
- *
- *  Created on: Oct 5, 2023
- *      Author: mgilhespie
- */
-
-
-/**
- * @file
- * SNTP client module
- */
-
-/*
  * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
  * All rights reserved.
  *
@@ -57,7 +44,7 @@
  * - complete SNTP_CHECK_RESPONSE checks 3 and 4
  */
 
- //
+//
 // Copyright: Avnet 2021
 // Modified by Nik Markovic <nikola.markovic@avnet.com> on 11/11/21.
 // The modification has iotc_set_system_time_us hook.

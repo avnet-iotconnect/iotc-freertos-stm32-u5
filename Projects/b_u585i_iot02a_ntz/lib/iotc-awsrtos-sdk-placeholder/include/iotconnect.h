@@ -35,30 +35,24 @@ typedef enum {
 typedef void (*IotConnectStatusCallback)(IotConnectConnectionStatus data);
 
 typedef struct {
-	const char *mqtt_endpoint;
-	const char *telemetry_cd;
-	const char *telemetry_dtg;		// Device Template GUID
+	const char *host;
+	const char *telemetry_cd;		// Device template "cd"
 } IotConnectAwsrtosConfig;
+
+
 
 typedef struct {
     IotConnectAuthType type;
-    union { // union because we may support different types of auth
-#if 0
-        struct identity { // for both IOTC_IDENTITY_RSA and IOTC_IDENTITY_ECC
-            UCHAR *client_private_key; // DER format (binary to C array)
-            size_t client_private_key_len;
-            UCHAR *client_certificate; // DER format (binary to C array)
-            size_t client_certificate_len;
-        } identity;
-#endif
-        char *symmetric_key; //
 
-#if 0
-        struct {
-            IotcAuthInterface auth_interface; //
-            IotcAuthInterfaceContext auth_interface_context;
-        } x509;
-#endif
+    PkiObject_t https_root_ca;
+    PkiObject_t mqtt_root_ca;
+
+    union { // union because we may support different types of auth
+    	struct
+    	{
+    		PkiObject_t device_cert;
+    		PkiObject_t device_key;
+    	} cert_info;
     } data;
 } IotConnectAuth;
 
@@ -66,7 +60,7 @@ typedef struct {
     char *env;    // Environment name. Contact your representative for details.
     char *cpid;   // Settings -> Company Profile.
     char *duid;   // Name of the device.
-    IotConnectAuth auth;
+    IotConnectAuth auth_info;
     IotclOtaCallback ota_cb; // callback for OTA events.
     IotclCommandCallback cmd_cb; // callback for command events.
     IotclMessageCallback msg_cb; // callback for ALL messages, including the specific ones like cmd or ota callback.

@@ -16,9 +16,9 @@
 #include "event_groups.h"
 #include "sys_evt.h"
 
-#define SNTP_SERVER_NAME	"pool.ntp.org"
+#define SNTP_SERVER_NAME					"pool.ntp.org"
 
-#define TX_TIMER_TICKS_PER_SECOND			1000 // configTICK_RATE_HZ
+#define TX_TIMER_TICKS_PER_SECOND			1000 // FIXME: Replace with configTICK_RATE_HZ
 
 #ifndef IOTC_MTB_TIME_MAX_TRIES
 #define IOTC_MTB_TIME_MAX_TRIES 			10

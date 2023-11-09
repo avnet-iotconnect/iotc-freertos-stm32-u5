@@ -39,6 +39,8 @@ typedef enum KvStoreEnum
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
 	CS_IOTC_TELEMETRY_CD,
+	CS_IOTC_CPID,
+	CS_IOTC_ENV,
 	CS_NUM_KEYS
 } KVStoreKey_t;
 
@@ -101,6 +103,14 @@ typedef enum KvStoreEnum
 #define IOTC_TELEMETRY_CD_DFLT    ""
 #endif /* !defined ( IOTC_TELEMETRY_CD_DFLT ) */
 
+#if !defined( IOTC_CPID_DFLT )
+#define IOTC_CPID_DFLT    ""
+#endif /* !defined ( IOTC_CPID_DFLT ) */
+
+#if !defined( IOTC_ENV_DFLT )
+#define IOTC_ENV_DFLT    ""
+#endif /* !defined ( IOTC_ENV_DFLT ) */
+
 /* -------------------------------- Values for common attributes -------------------------------- */
 
 /* Array to map between strings and KVStoreKey_t IDs */
@@ -111,7 +121,9 @@ typedef enum KvStoreEnum
         "mqtt_port",       \
         "wifi_ssid",       \
         "wifi_credential", \
-        "telemetry_cd"     \
+        "telemetry_cd",    \
+		"cpid",			   \
+		"env"			   \
 	}
 
 #define KV_STORE_DEFAULTS                                                          \
@@ -122,7 +134,9 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
         KV_DFLT( KV_TYPE_STRING, IOTC_TELEMETRY_CD_DFLT ), /* CS_IOTC_TELEMETRY_CD */ \
-}
+        KV_DFLT( KV_TYPE_STRING, IOTC_CPID_DFLT ), 	   /* CS_IOTC_CPID */          \
+        KV_DFLT( KV_TYPE_STRING, IOTC_ENV_DFLT ), 	   /* CS_IOTC_ENV */           \
+	}
 
 
 #endif /* _KVSTORE_CONFIG_H */

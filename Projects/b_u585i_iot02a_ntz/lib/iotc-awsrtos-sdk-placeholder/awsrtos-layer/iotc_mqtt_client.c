@@ -23,8 +23,7 @@
 #include "logging_levels.h"
 #include "logging.h"
 
-/* NVM config includes */
-#include "kvstore.h"
+#include "mbedtls_transport.h"
 
 /* MQTT includes */
 #include "core_mqtt.h"
@@ -36,7 +35,7 @@
 #include "iotconnect.h"
 #include "iotconnect_lib.h"
 #include "iotconnect_event.h"
-#include "iotc_awsmqtt_client.h"
+#include <iotc_mqtt_client.h>
 #include "sys_evt.h"
 
 
@@ -73,6 +72,14 @@ struct MQTTAgentCommandContext
 };
 
 
+typedef struct AWSMQTTContext
+{
+	int port;
+	const char *host;
+	const char subTopicString[256];		// MQTT topic to subscribe to for incoming cloud-2-device commands
+	const char pubTopicString[256];		// MQTT topcc to publish to for events (telemetry, command acknowledements)
+} AWSMQTTContext_t;
+
 // @brief 	The MQTT agent manages the MQTT contexts.  This set the handle to the context used by this demo.
 extern MQTTAgentContext_t xGlobalMqttAgentContext;
 
@@ -81,14 +88,10 @@ static MQTTAgentHandle_t xMQTTAgentHandle = NULL;
 
 // @brief 	Handle to message queue of acknowledgements offloaded onto vMQTTSubscribeTask.
 static QueueHandle_t mqtt_message_queue = NULL;
-
-// @brief	MQTT topic to subscribe to for incoming cloud-2-device commands
-static char pcSubTopicString[ MQTT_SUBSCRIBE_TOPIC_STR_LEN ] = { 0 };
-
-// @brief	MQTT topcc to publish to for events (telemetry, command acknowledements)
-static char pcPubTopicString[ MQTT_PUBLISH_TOPIC_STR_LEN ] = { 0 };;
+static AWSMQTTContext_t xGlobalAWSMQTTContext;
 
 
+// Prototypes
 static void publish_events_task(void * pvParameters);
 static void publish_complete_callback(MQTTAgentCommandContext_t * pxCommandContext,
                                       MQTTAgentReturnInfo_t * pxReturnInfo);
@@ -97,7 +100,7 @@ static BaseType_t publish_and_wait_for_ack(MQTTAgentHandle_t xAgentHandle,
                                            const void * pvPublishData,
                                            size_t xPublishDataLen);
 static MQTTStatus_t subscribe_to_topic(MQTTQoS_t xQoS, char *pcTopicFilter);
-static void incoming_message_callback(void * pvIncomingPublishCallbackContext, MQTTPublishInfo_t * pxPublishInfo);
+static void incoming_message_callback(void *pvIncomingPublishCallbackContext, MQTTPublishInfo_t *pxPublishInfo);
 
 
 /* @brief	Initialize the MQTT client and associated tasks for publishing and receiving commands
@@ -109,26 +112,30 @@ static void incoming_message_callback(void * pvIncomingPublishCallbackContext, M
  * avoid the need for creating the additional iotc_publish_events_task in this file that
  * handles the publishing of messages.
  */
-int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrtosConfig* awsrtos_config)
+int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrtosConfig *awsrtos_config)
 {
     BaseType_t xResult;
-    IotclConfig *iot_config;
+    IotclConfig *iotcl_config;
     MQTTStatus_t xMQTTStatus;
-    char * pcDeviceId = NULL;
-	char * pcTelemetryCd = NULL;
+    const char * pcDeviceId;
+	const char * pcTelemetryCd;
 	int lSubTopicLen = 0;
 	int lPubTopicLen = 0;
 
-	// IotConnectAwsrtosConfig->mqtt_endpoint for address
+	LogInfo("awsmqtt_client_init");
 
-    iot_config = iotcl_get_config();
+    iotcl_config = iotcl_get_config();
 
-    // FIXME IotConnectAwsrtosConfig->thing_name for device_id;
+    if (iotcl_config == NULL) {
+		LogError( "iotcl_config uninitialized." );
+		vTaskDelete( NULL );
+    }
 
-	pcDeviceId = iot_config->device.duid;
+	pcDeviceId = iotcl_config->device.duid;
+	pcTelemetryCd = iotcl_config->telemetry.cd;
 
-	// Unsure where to get telemetry_cd from in passed args
-	pcTelemetryCd = iot_config->telemetry.cd;
+    LogInfo("cd = %08x", (uint32_t)iotcl_config->telemetry.cd);
+    vTaskDelay(200);
 
 	if (pcDeviceId == NULL) {
 		LogError( "Error getting the thing_name setting." );
@@ -140,22 +147,47 @@ int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrt
 		return -1;
 	}
 
-	lSubTopicLen = snprintf( pcSubTopicString, ( size_t ) MQTT_SUBSCRIBE_TOPIC_STR_LEN, SUBSCRIBE_TOPIC_FORMAT, pcDeviceId);
+    LogInfo(".. checked for null telemetry and device id");
+    vTaskDelay(200);
+
+	lSubTopicLen = snprintf(xGlobalAWSMQTTContext.subTopicString, ( size_t ) MQTT_SUBSCRIBE_TOPIC_STR_LEN, SUBSCRIBE_TOPIC_FORMAT, pcDeviceId);
 	if( ( lSubTopicLen <= 0 ) || ( lSubTopicLen > MQTT_SUBSCRIBE_TOPIC_STR_LEN) ) {
 		LogError( "Error while constructing subscribe topic string." );
 		vTaskDelete( NULL );
 	}
 
-	lPubTopicLen = snprintf( pcPubTopicString, ( size_t ) MQTT_PUBLISH_TOPIC_STR_LEN, PUBLISH_TOPIC_FORMAT, pcDeviceId, pcTelemetryCd);
+	lPubTopicLen = snprintf(xGlobalAWSMQTTContext.pubTopicString, ( size_t ) MQTT_PUBLISH_TOPIC_STR_LEN, PUBLISH_TOPIC_FORMAT, pcDeviceId, pcTelemetryCd);
 	if( ( lPubTopicLen <= 0 ) || ( lPubTopicLen > MQTT_PUBLISH_TOPIC_STR_LEN) ) {
 		LogError( "Error while constructing ack publsh topic string, len: %d.", lPubTopicLen );
 		return -1;
 	}
 
-	// FIXME: Currently vMQTTAgentTask gets the endpoint, certificates and CA root certificate from nvm storage.
+
+    LogInfo(".. generated sub and pub topic strings");
+    vTaskDelay(200);
+
+
+	xResult = vSetMQTTConfig(awsmqtt_config->host,
+							  awsmqtt_config->port,
+							  pcDeviceId,
+							  xGlobalAWSMQTTContext.subTopicString,
+							  xGlobalAWSMQTTContext.pubTopicString,
+							  awsmqtt_config->auth->mqtt_root_ca,
+							  awsmqtt_config->auth->data.cert_info.device_cert,
+							  awsmqtt_config->auth->data.cert_info.device_key);
+
+    LogInfo("called vSetMQTTConfig");
+    vTaskDelay(200);
+
+    LogInfo("creating mqtt agent task");
+    vTaskDelay(200);
+
+
+	configASSERT( xResult == MQTTSuccess );
 
     xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 4096, NULL, 10, NULL );
     configASSERT( xResult == pdTRUE );
+
 
 	mqtt_message_queue = xQueueCreate(ACK_MSG_Q_SIZE, sizeof(char *));
 	if (mqtt_message_queue == NULL) {
@@ -170,13 +202,14 @@ int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrt
 
     LogInfo( ( "MQTT Agent is connected. subscribing to topic" ) );
 
-	xMQTTStatus = subscribe_to_topic(MQTTQoS1, pcSubTopicString);	// Deliver at least once
+	xMQTTStatus = subscribe_to_topic(MQTTQoS1, xGlobalAWSMQTTContext.subTopicString);	// Deliver at least once
 
 	if( xMQTTStatus != MQTTSuccess ) {
-		LogError( "Failed to subscribe to topic: %s.", pcSubTopicString );
+		LogError( "Failed to subscribe to topic: %s.", xGlobalAWSMQTTContext.subTopicString );
 		return -1;
 	}
 
+	// FIXME: May not be needed, prvAgentMessageSend
     xResult = xTaskCreate(publish_events_task, "iotc_pub_events_task", 2048, NULL, 5, NULL );
 
     if (xResult != pdTRUE ) {
@@ -274,7 +307,7 @@ static void publish_events_task( void * pvParameters )
         	lMsgLen = strlen(pcMsgBuf) + 1;
 
         	ret = publish_and_wait_for_ack(xMQTTAgentHandle,
-        								  pcPubTopicString,
+        								  xGlobalAWSMQTTContext.pubTopicString,
         	                              pcMsgBuf,
         	                              lMsgLen);
 
@@ -319,6 +352,8 @@ static void publish_complete_callback( MQTTAgentCommandContext_t * pxCommandCont
 
 /* @brief	Publish to an MQTT topic and wait for an acknowledgement
  *
+ * FIXME: Probably not needed, remove.  MQTT_Publish queues message, does not block,
+ * presumably agent task handles it.
  */
 static BaseType_t publish_and_wait_for_ack( MQTTAgentHandle_t xAgentHandle,
                                            const char * pcTopic,

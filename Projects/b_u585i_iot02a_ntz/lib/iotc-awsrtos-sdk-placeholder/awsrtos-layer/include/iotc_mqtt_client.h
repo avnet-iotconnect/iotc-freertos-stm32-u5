@@ -13,22 +13,31 @@
 typedef void (*IotConnectC2dCallback)(char* message, size_t message_len);
 
 typedef struct {
-    char *host;    // IoTHub host to connect the client to
-    char *device_name;   // Name of the device - combined "cpid-duid"
-    IotConnectAuth *auth; // Pointer to IoTConnect auth configuration
-    IotConnectC2dCallback c2d_msg_cb; // callback for inbound messages
+    char *host;    			// Host to connect the client to
+    int port;				// MQTT Port to connect to
+    char *device_name;   	// Name of the device
+	char *sub_topic;
+    char *pub_topic;
+    IotConnectAuth *auth; 				// Pointer to IoTConnect auth configuration
+    IotConnectC2dCallback c2d_msg_cb; 	// callback for inbound messages
     IotConnectStatusCallback status_cb; // callback for connection status
 } IotConnectAWSMQTTConfig;
 
 
 int awsmqtt_client_init(IotConnectAWSMQTTConfig *c, IotConnectAwsrtosConfig* awsrtos_config);
-
 void awsmqtt_client_disconnect(void);
-
 bool awsmqtt_client_is_connected(void);
+int awsmqtt_send_message(const char *message);	// send a null terminated string to MQTT host
 
-// send a null terminated string to IoTHub
-int awsmqtt_send_message(const char *message);
+MQTTStatus_t vSetMQTTConfig( const char *host,
+						  int port,
+						  const char *device_id,
+						  const char *sub_topic,
+						  const char *pub_topic,
+						  PkiObject_t root_ca_cert,
+						  PkiObject_t device_cert,
+						  PkiObject_t device_key);
+
 
 
 /**

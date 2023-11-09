@@ -41,6 +41,7 @@
 #include "queue.h"
 
 #include "kvstore.h"
+#include "mbedtls_transport.h"
 
 #include "sys_evt.h"
 
@@ -62,24 +63,15 @@
 #include "iotconnect_lib.h"
 #include "iotconnect_telemetry.h"
 #include "iotconnect_event.h"
+#include "iotconnect_config.h"
 
 // BSP-Specific
 #include "stm32u5xx.h"
 #include "b_u585i_iot02a.h"
 
-
-// @brief	Version string in telemetry data
-#define APP_VERSION "01.00.06"
-
-// @brief 	Size of statically allocated buffers for holding topic names and payloads.
-#define MQTT_PUBLISH_MAX_LEN                 ( 1024 )
-#define MQTT_PUBLISH_PERIOD_MS               ( 3000 )
-#define MQTT_PUBLICH_TOPIC_STR_LEN           ( 256 )
-#define MQTT_PUBLISH_BLOCK_TIME_MS           ( 200 )
-#define MQTT_PUBLISH_NOTIFICATION_WAIT_MS    ( 1000 )
-#define MQTT_NOTIFY_IDX                      ( 1 )
-#define MQTT_PUBLISH_QOS                     ( MQTTQoS0 )
-
+// Constants
+#define APP_VERSION 			"01.00.06"		// Version string in telemetry data
+#define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
 static IotConnectAwsrtosConfig awsrtos_config;
@@ -102,10 +94,6 @@ static void command_status(IotclEventData data, bool status, const char *command
 void iotconnect_app( void * pvParameters )
 {
     BaseType_t result = pdFALSE;
-    char *mqtt_endpoint_url;
-    char *device_id;
-    char *telemetry_cd;
-    IotConnectClientConfig *config;
 
     result = init_sensors();
 
@@ -117,40 +105,65 @@ void iotconnect_app( void * pvParameters )
     // Get some settings from non-volatile storage.  These can be set on the command line
     // using the conf command. mqtt_endpoint_url is set here as discovery and sync are
     // currently not implemented
-    mqtt_endpoint_url = KVStore_getStringHeap(CS_CORE_MQTT_ENDPOINT, NULL);
-    telemetry_cd = KVStore_getStringHeap(CS_IOTC_TELEMETRY_CD, NULL);
-    device_id = KVStore_getStringHeap(CS_CORE_THING_NAME, NULL);
+#if 1
+    char *device_id = KVStore_getStringHeap(CS_CORE_THING_NAME, NULL);
+    char *cpid = KVStore_getStringHeap(CS_IOTC_CPID, NULL);
+    char *iotc_env = KVStore_getStringHeap(CS_IOTC_ENV, NULL);
+#else
+    char *env = "poc";
+    char *cpid = "97FF86E8728645E9B89F7B07977E4B15";
+    char *device_id = "mgilhdev02caci";
+#endif
 
-    if (mqtt_endpoint_url == NULL || telemetry_cd == NULL || device_id == NULL) {
-    	LogError ("IOTC configuration, mqtt_endpoint, telemetry_cd or thing_name or not set");
-    	vTaskDelete( NULL );
+    if (device_id == NULL || cpid == NULL || iotc_env == NULL) {
+    	LogError("IOTC configuration, thing_name, cpid or env are not set\n");
+		vTaskDelete(NULL);
     }
 
     // IoT-Connect configuration setup
-    config = iotconnect_sdk_init_and_get_config();
- 	config->cpid = NULL;
-	config->env = "poc";
+    IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
+    config->cpid = cpid;			// FIXME: Need environment variable for discovery/sync (get it regardless if needed)
+	config->env = iotc_env;			// FIXME: Need environment variable for discovery/sync (get it regardless if needed)
 	config->duid = device_id;
 	config->cmd_cb = on_command;
 	config->ota_cb = NULL;
-	config->status_cb = NULL;		// FIXME: on_connection_status
-	config->auth.type = IOTC_X509;
-#if 0
-	// FIXME: Currently the mqtt_agent_task.c gets the certificates directly from the KVstore non volatile storage (set on command line).
-	config->auth_info.trust_store = mqtt_root_ca_buffer0;
-    config->auth_info.data.cert_info.device_cert = mqtt_device_cert0;
-    config->auth_info.data.cert_info.device_key = mqtt_device_private_key0;
-#endif
+	config->status_cb = NULL;
+	config->auth_info.type = IOTC_X509;
+
+	LogInfo("Getting certificates...");
+	vTaskDelay(200);
+
+    // Note: the root_ca requires an array of PkiObjects with a single entry
+    config->auth_info.https_root_ca              = xPkiObjectFromLabel( TLS_HTTPS_ROOT_CA_CERT_LABEL );
+    config->auth_info.mqtt_root_ca               = xPkiObjectFromLabel( TLS_MQTT_ROOT_CA_CERT_LABEL );
+    config->auth_info.data.cert_info.device_cert = xPkiObjectFromLabel( TLS_CERT_LABEL );
+    config->auth_info.data.cert_info.device_key  = xPkiObjectFromLabel( TLS_KEY_PRV_LABEL );;
+
+	LogInfo("..Got certificates");
+	vTaskDelay(200);
 
 	/* Configuration specific to the current AWS MQTT code
 	 * Note: some of these fields will eventually be obtained by the IOT-Connect discovery and sync
 	 * The mqtt_agent_task.c gets this directly from the KVstore non volatile storage (set on command line).
 	 */
-	awsrtos_config.mqtt_endpoint = mqtt_endpoint_url;
-	awsrtos_config.telemetry_cd = telemetry_cd;
-	awsrtos_config.telemetry_dtg = NULL;
+#if defined(IOTCONFIG_USE_DISCOVERY_SYNC)
+    // Get MQTT configuration from discovery and sync
+    iotconnect_sdk_init(NULL);
+#else
+    // Get configuration from CLI
+    char *mqtt_endpoint_url = KVStore_getStringHeap(CS_CORE_MQTT_ENDPOINT, NULL);
+    char *telemetry_cd = KVStore_getStringHeap(CS_IOTC_TELEMETRY_CD, NULL);
 
+    if (mqtt_endpoint_url == NULL || telemetry_cd == NULL) {
+    	LogError ("IOTC configuration, mqtt_endpoint, telemetry_cd not set");
+    	vTaskDelete( NULL );
+    }
+
+    awsrtos_config.host = mqtt_endpoint_url;		// FIXME: From discovery/sync or CLI
+	awsrtos_config.telemetry_cd = telemetry_cd;				// FIXMME: Get from discovery/sync or CLI
 	iotconnect_sdk_init(&awsrtos_config);
+#endif
+
 
     while (1) {
         /* Interpret sensor data */

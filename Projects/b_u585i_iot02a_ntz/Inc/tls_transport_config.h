@@ -26,14 +26,13 @@
 #include "tls_transport_lwip.h"
 #include "core_pkcs11_config.h"
 
-#define configTLS_MAX_LABEL_LEN    pkcs11configMAX_LABEL_LENGTH
-#define TLS_KEY_PRV_LABEL          pkcs11_TLS_KEY_PRV_LABEL
-#define TLS_KEY_PUB_LABEL          pkcs11_TLS_KEY_PUB_LABEL
-#define TLS_CERT_LABEL             pkcs11_TLS_CERT_LABEL
-#define TLS_ROOT_CA_CERT_LABEL     pkcs11_ROOT_CA_CERT_LABEL
-#define TLS_GODADDY_CA_CERT_LABEL  pkcs11_GODADDY_CA_CERT_LABEL
-
-#define OTA_SIGNING_KEY_LABEL      pkcs11configLABEL_CODE_VERIFICATION_KEY
+#define configTLS_MAX_LABEL_LEN    		pkcs11configMAX_LABEL_LENGTH
+#define TLS_KEY_PRV_LABEL          		pkcs11_TLS_KEY_PRV_LABEL
+#define TLS_KEY_PUB_LABEL          		pkcs11_TLS_KEY_PUB_LABEL
+#define TLS_CERT_LABEL             		pkcs11_TLS_CERT_LABEL
+#define TLS_MQTT_ROOT_CA_CERT_LABEL     pkcs11_MQTT_ROOT_CA_CERT_LABEL
+#define TLS_HTTPS_ROOT_CA_CERT_LABEL  	pkcs11_HTTPS_ROOT_CA_CERT_LABEL
+#define OTA_SIGNING_KEY_LABEL      		pkcs11configLABEL_CODE_VERIFICATION_KEY
 
 #define TRANSPORT_USE_CTR_DRBG     1
 
