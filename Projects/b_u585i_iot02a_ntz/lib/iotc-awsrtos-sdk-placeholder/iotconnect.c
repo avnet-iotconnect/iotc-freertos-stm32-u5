@@ -146,9 +146,9 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
     LogInfo("IOTC: setting cd, duid and host from supplied config");
 
     // Get mqtt endpoint device id, telemetry_cd from the CLI
-	lib_config.telemetry.cd = ac->telemetry_cd;
+	lib_config.telemetry.cd = awsrtos_config->telemetry_cd;
     awsmqtt_config.device_name = config.duid;
-    awsmqtt_config.host = ac->host;
+    awsmqtt_config.host = awsrtos_config->host;
     awsmqtt_config.port = 8883;
     awsmqtt_config.auth = &config.auth_info;
     // awsmqtt_config.status_cb = on_iotconnect_status;

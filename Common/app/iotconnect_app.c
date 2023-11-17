@@ -103,17 +103,11 @@ void iotconnect_app( void * pvParameters )
     }
 
     // Get some settings from non-volatile storage.  These can be set on the command line
-    // using the conf command. mqtt_endpoint_url is set here as discovery and sync are
-    // currently not implemented
-#if 1
-    char *device_id = KVStore_getStringHeap(CS_CORE_THING_NAME, NULL);
+    // using the conf command.
+
+    char *device_id = KVStore_getStringHeap(CS_CORE_THING_NAME, NULL);   // Device ID
     char *cpid = KVStore_getStringHeap(CS_IOTC_CPID, NULL);
     char *iotc_env = KVStore_getStringHeap(CS_IOTC_ENV, NULL);
-#else
-    char *env = "poc";
-    char *cpid = "97FF86E8728645E9B89F7B07977E4B15";
-    char *device_id = "mgilhdev02caci";
-#endif
 
     if (device_id == NULL || cpid == NULL || iotc_env == NULL) {
     	LogError("IOTC configuration, thing_name, cpid or env are not set\n");
@@ -150,7 +144,9 @@ void iotconnect_app( void * pvParameters )
     // Get MQTT configuration from discovery and sync
     iotconnect_sdk_init(NULL);
 #else
-    // Get configuration from CLI
+    // Not using Discovery and Sync so some additional settings, are obtained from the CLI,
+    // These are the MQTT endpoint and telemetry "cd" value
+
     char *mqtt_endpoint_url = KVStore_getStringHeap(CS_CORE_MQTT_ENDPOINT, NULL);
     char *telemetry_cd = KVStore_getStringHeap(CS_IOTC_TELEMETRY_CD, NULL);
 

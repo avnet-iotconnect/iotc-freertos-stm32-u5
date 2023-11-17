@@ -35,4 +35,11 @@
 #include "logging.h"
 
 
+/*
+ *  HTTP Timeout set to 3000 milliseconds as default timeout of 10ms results in a timeout
+ *  before we get a response.
+ */
+#define HTTP_RECV_RETRY_TIMEOUT_MS    ( 3000U )
+
+
 #endif /* CORE_HTTP_CONFIG_H */
