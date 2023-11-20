@@ -257,7 +257,7 @@ static void on_command(IotclEventData data) {
 
 	char *command = iotcl_clone_command(data);
 
-#if 1
+#if 0
     if (NULL != command) {
     	command_status(data, true, command, "OK");
     } else {
@@ -265,10 +265,14 @@ static void on_command(IotclEventData data) {
     }
 #else
     if (NULL != command) {
+    	LogInfo("Received command: %s", command);
+
     	if(NULL != strstr(command, "led-red") ) {
 			if (NULL != strstr(command, "on")) {
+				LogInfo("led-red on");
 				BSP_LED_On(LED_RED);
 			} else {
+				LogInfo("led-red off");
 				BSP_LED_Off(LED_RED);
 			}
 			command_status(data, true, command, "OK");
@@ -280,10 +284,12 @@ static void on_command(IotclEventData data) {
 			}
 			command_status(data, true, command, "OK");
 		} else {
+			LogInfo("command not recognized");
 			command_status(data, false, command, "Not implemented");
 		}
         free((void*) command);
     } else {
+		LogInfo("No command, internal error");
         command_status(data, false, "?", "Internal error");
     }
 #endif

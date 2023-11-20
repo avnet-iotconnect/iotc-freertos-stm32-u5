@@ -687,6 +687,8 @@ static void prvIncomingPublishCallback( MQTTAgentContext_t * pMqttAgentContext,
 
     ( void ) packetId;
 
+    LogInfo("prvIncomingPublishCallback");
+
     configASSERT( pMqttAgentContext );
     configASSERT( pMqttAgentContext->pIncomingCallbackContext );
     configASSERT( pxPublishInfo );

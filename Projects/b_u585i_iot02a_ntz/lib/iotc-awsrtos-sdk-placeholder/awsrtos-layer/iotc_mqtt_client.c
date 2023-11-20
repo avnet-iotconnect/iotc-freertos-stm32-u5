@@ -476,6 +476,8 @@ static void incoming_message_callback( void * pvIncomingPublishCallbackContext, 
 
     ( void ) pvIncomingPublishCallbackContext;
 
+    LogInfo("iotc mqtt client - incoming_message_callback");
+
     /* Create a message that contains the incoming MQTT payload to the logger,
      * terminating the string first. */
     if( pxPublishInfo->payloadLength < confgPAYLOAD_BUFFER_LENGTH ) {
