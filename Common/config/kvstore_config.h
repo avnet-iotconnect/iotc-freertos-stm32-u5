@@ -29,7 +29,7 @@
 #include "kvstore_config_plat.h"
 #include "test_param_config.h"
 #include "test_execution_config.h"
-#include "ota_config.h"
+
 
 typedef enum KvStoreEnum
 {
