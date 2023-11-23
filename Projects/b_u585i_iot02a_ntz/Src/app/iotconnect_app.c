@@ -1,28 +1,7 @@
-/*
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- * Derived from simple_sub_pub_demo.c
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://www.FreeRTOS.org
- * https://github.com/FreeRTOS
- *
- */
+//
+// Copyright: Avnet 2023
+// Created by Marven Gilhespie
+//
 
 #include "logging_levels.h"
 /* define LOG_LEVEL here if you want to modify the logging level from the default */
@@ -115,38 +94,25 @@ void iotconnect_app( void * pvParameters )
     }
 
     // IoT-Connect configuration setup
+
     IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
-    config->cpid = cpid;			// FIXME: Need environment variable for discovery/sync (get it regardless if needed)
-	config->env = iotc_env;			// FIXME: Need environment variable for discovery/sync (get it regardless if needed)
+    config->cpid = cpid;
+	config->env = iotc_env;
 	config->duid = device_id;
 	config->cmd_cb = on_command;
 	config->ota_cb = NULL;
 	config->status_cb = NULL;
 	config->auth_info.type = IOTC_X509;
-
-	LogInfo("Getting certificates...");
-	vTaskDelay(200);
-
-    // Note: the root_ca requires an array of PkiObjects with a single entry
     config->auth_info.https_root_ca              = xPkiObjectFromLabel( TLS_HTTPS_ROOT_CA_CERT_LABEL );
     config->auth_info.mqtt_root_ca               = xPkiObjectFromLabel( TLS_MQTT_ROOT_CA_CERT_LABEL );
     config->auth_info.data.cert_info.device_cert = xPkiObjectFromLabel( TLS_CERT_LABEL );
     config->auth_info.data.cert_info.device_key  = xPkiObjectFromLabel( TLS_KEY_PRV_LABEL );;
 
-	LogInfo("..Got certificates");
-	vTaskDelay(200);
-
-	/* Configuration specific to the current AWS MQTT code
-	 * Note: some of these fields will eventually be obtained by the IOT-Connect discovery and sync
-	 * The mqtt_agent_task.c gets this directly from the KVstore non volatile storage (set on command line).
-	 */
 #if defined(IOTCONFIG_USE_DISCOVERY_SYNC)
     // Get MQTT configuration from discovery and sync
     iotconnect_sdk_init(NULL);
 #else
     // Not using Discovery and Sync so some additional settings, are obtained from the CLI,
-    // These are the MQTT endpoint and telemetry "cd" value
-
     char *mqtt_endpoint_url = KVStore_getStringHeap(CS_CORE_MQTT_ENDPOINT, NULL);
     char *telemetry_cd = KVStore_getStringHeap(CS_IOTC_TELEMETRY_CD, NULL);
 
@@ -155,11 +121,10 @@ void iotconnect_app( void * pvParameters )
     	vTaskDelete( NULL );
     }
 
-    awsrtos_config.host = mqtt_endpoint_url;		// FIXME: From discovery/sync or CLI
-	awsrtos_config.telemetry_cd = telemetry_cd;				// FIXMME: Get from discovery/sync or CLI
+    awsrtos_config.host = mqtt_endpoint_url;
+	awsrtos_config.telemetry_cd = telemetry_cd;
 	iotconnect_sdk_init(&awsrtos_config);
 #endif
-
 
     while (1) {
         /* Interpret sensor data */
@@ -257,13 +222,6 @@ static void on_command(IotclEventData data) {
 
 	char *command = iotcl_clone_command(data);
 
-#if 0
-    if (NULL != command) {
-    	command_status(data, true, command, "OK");
-    } else {
-        command_status(data, false, "?", "Internal error");
-    }
-#else
     if (NULL != command) {
     	LogInfo("Received command: %s", command);
 
@@ -292,7 +250,6 @@ static void on_command(IotclEventData data) {
 		LogInfo("No command, internal error");
         command_status(data, false, "?", "Internal error");
     }
-#endif
 }
 
 

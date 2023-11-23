@@ -31,11 +31,11 @@
 /*-----------------------------------------------------------*/
 
 /* C standard includes. */
+#include <core_pkcs11_pal/core_pkcs11_pal_utils.h>
 #include <string.h>
 #include <stdint.h>
 
 /* corePKCS11 header include. */
-#include "core_pkcs11_pal_utils.h"
 
 /**
  * @ingroup pkcs11_macros

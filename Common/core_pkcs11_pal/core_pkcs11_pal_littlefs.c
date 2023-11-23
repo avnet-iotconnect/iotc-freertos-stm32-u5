@@ -29,6 +29,7 @@
  */
 /*-----------------------------------------------------------*/
 
+#include <core_pkcs11_pal/core_pkcs11_pal_utils.h>
 #include "FreeRTOS.h"
 #include "atomic.h"
 
@@ -36,8 +37,6 @@
 #include "core_pkcs11_config.h"
 #include "core_pkcs11_config_defaults.h"
 #include "core_pkcs11.h"
-#include "core_pkcs11_pal_utils.h"
-
 #include "mbedtls/asn1.h"
 
 #include "lfs_util.h"

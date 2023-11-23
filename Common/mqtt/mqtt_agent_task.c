@@ -164,6 +164,9 @@ static const char * pcAlpnProtocols[] = { AWS_IOT_MQTT_ALPN, NULL };
 
 static MQTTAgentHandle_t xDefaultInstanceHandle = NULL;
 
+/*
+ * @brief Configuration settings passed for iotconnect_init().
+ */
 static struct IOTCMQTTConfig {
 	const char *host;
 	int port;

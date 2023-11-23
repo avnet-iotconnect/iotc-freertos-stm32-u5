@@ -67,7 +67,6 @@ static uint32_t ulGlobalEntryTimeTicks;			// Timer epoch in ticks since start of
 static TransportInterface_t transportInterface = { 0 };
 static HTTPRequestHeaders_t requestHeaders = { 0 };
 static HTTPResponse_t response = { 0 };
-static HTTPClient_ResponseHeaderParsingCallback_t headerParsingCallback = { 0 };
 static PkiObject_t pxRootCaChain[1];
 
 
@@ -109,9 +108,6 @@ int32_t iotc_send_http_request(IotConnectHttpResponse *iotc_response,
 
     assert( method != NULL );
     assert( path != NULL );
-
-//	LogInfo ("send_http_request, %s : %s : %s\n", server_host, method, path);
-//	vTaskDelay(400);
 
     pNetworkContext = configure_transport();
 
