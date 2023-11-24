@@ -42,7 +42,6 @@
 									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.includepaths.1165908539" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.includepaths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib/iotc-awsrtos-sdk-placeholder/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib/iotc-awsrtos-sdk-placeholder/awsrtos-layer/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreHTTP/source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreHTTP/source/dependency/3rdparty/llhttp/include}&quot;"/>
@@ -69,6 +68,40 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/mqtt}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/STM32U5_HAL/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/stm32u5_mbedtls_accel}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/config}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/configs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/fs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/core_pkcs11_pal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/boards}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/cli}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/crypto}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/kvstore}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/net}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/sys}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/STM32U5xx_HAL/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/STM32U5xx_HAL/Inc/Legacy}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Device/ST/STM32U5xx/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Core/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/aps6408}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/hts221}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/iis2mdc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/ism330dhcx}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/lps22hh}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/lsm6dso}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/mx25lm51245g}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/veml6030}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/B-U585I-IOT02A}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/gpio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/spi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/uart}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/stm32u5_mbedtls_accel}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/STM32U5xx_HAL}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Device/ST/STM32U5xx/Include/Templates}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input.722080363" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input"/>
 							</tool>
@@ -88,21 +121,23 @@
 									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=&quot;mbedtls_config_ntz.h&quot;"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.1707704311" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/pkcs11}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Src/ota_pal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/boards}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/cli}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/kvstore}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/net/lwip_port/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/STM32U5_HAL/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/stm32u5_mbedtls_accel}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/bsp}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/cJSON}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/cJSON/library_config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/corePKCS11/mbedtls_utils}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/LittleFS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/bsp}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/ota/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/ota/portable/os}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/tinycbor}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/pkcs11}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/mbedtls/library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/mbedtls/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/deviceDefender/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/deviceShadow/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/app/mqtt}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/backoffAlgorithm/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreJSON/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreMQTTAgent/include}&quot;"/>
@@ -110,19 +145,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreMQTT/interface}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/CommonIO/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/CommonIO/gpio}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/boards}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/net/lwip_port/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/lwip/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/CMSIS/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/cli}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/CMSIS/stm32u5xx}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/STM32U5_HAL/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/freertos_kernel/port}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/freertos_kernel/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/config}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/kvstore}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/corePKCS11/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Libraries-Integration-Tests}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Libraries-Integration-Tests/common}&quot;"/>
@@ -131,13 +158,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Libraries-Integration-Tests/pkcs11}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Libraries-Integration-Tests/pkcs11/dev_mode_key_provisioning}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Libraries-Integration-Tests/transport_interface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/Unity/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/Unity/extras/fixture/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/Unity/extras/memory/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/b_u585i_iot02a_ntz/lib/cJSON}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/b_u585i_iot02a_ntz/lib/iotc-c-lib/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib/iotc-awsrtos-sdk-placeholder/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib/iotc-awsrtos-sdk-placeholder/awsrtos-layer/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreHTTP/source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/coreHTTP/source/dependency/3rdparty/llhttp/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/aws-iot-device-sdk-embedded-C/platform/posix/transport/include}&quot;"/>
@@ -151,18 +171,41 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Plus-TCP/test/cbmc/patches}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Plus/ThirdParty/winpcap/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/FreeRTOS-Plus/Test/FreeRTOS-Plus-TCP/Integration/Full-TCP-Suite/Test_Code/Test_Cases/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib/iotc-awsrtos-sdk-placeholder/awsrtos-layer/mqtt}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/config}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/configs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/fs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/mqtt}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/IoTConnect/iotc-c-lib/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/IoTConnect/iotc-awsrtos-sdk-placeholder/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/IoTConnect/iotc-awsrtos-sdk-placeholder/awsrtos-layer}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/IoTConnect/iotc-awsrtos-sdk-placeholder/awsrtos-layer/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/IoTConnect/iotc-awsrtos-sdk-placeholder/awsrtos-layer/mqtt}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/cJSON}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/cJSON/library_config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/IoTConnect/iotc-awsrtos-sdk-placeholder/awsrtos-layer/sntp}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/mqtt}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/STM32U5_HAL/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/stm32u5_mbedtls_accel}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/core_pkcs11_pal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/crypto}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/net}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Common/sys}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/STM32U5xx_HAL/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/STM32U5xx_HAL/Inc/Legacy}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Device/ST/STM32U5xx/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Core/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/aps6408}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/hts221}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/iis2mdc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/ism330dhcx}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/lps22hh}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/lsm6dso}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/mx25lm51245g}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/Components/veml6030}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/BSP/B-U585I-IOT02A}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/gpio}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/spi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CommonIO/uart}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/stm32u5_mbedtls_accel}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/STM32U5xx_HAL}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Device/ST/STM32U5xx/Include/Templates}&quot;"/>
 								</option>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.warnings.extra.1737884242" name="Enable extra warning flags (-Wextra)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.warnings.extra" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.warnings.missing_include_dirs.1877044054" name="Warn if a user-supplied include directory does not exist (-Wmissing-include-dirs)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.warnings.missing_include_dirs" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -201,9 +244,8 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Drivers/bsp/b_u585i_iot02a_ospi.c|Common|Drivers/bsp/b_u585i_iot02a_camera.c|lib/cJSON/tests|Drivers/bsp/b_u585i_iot02a_eeprom.c|Drivers/bsp/b_u585i_iot02a_usbpd_pwr.c|Libraries|Inc|lib/iotc-c-lib/tests|lib/cJSON/test.c|Src|Drivers/bsp/b_u585i_iot02a_audio.c|lib/cJSON/fuzzing" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="sys/time|app/defender|net/time_agent.c|crypto/mbedtls_ans1_utils.c|sys/tfm_ns_interface_freertos.c|crypto/PkiObjectAsn1Utils.c|net/PkiObjectAsn1Utils.c|net/mbedtls_transport_pkcs11_ec.c|net/strptime.c|app/ota|mcuboot/**|net/mbedtls_ans1_utils.c|net/mbedtls_transport_pkcs11.c|app/mqtt/subscription_manager.c|app/TimeSyncTask.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
-						<entry excluding="tools|FreeRTOS-Libraries-Integration-Tests|coreJSON|Unity|Unity/extras/fixture/test|FreeRTOS-Plus-TCP/cmake_modules|FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace|coreHTTP/test|FreeRTOS-Plus/Source/Application-Protocols/coreHTTP|aws-iot-device-sdk-embedded-C/tools|Unity/test|mbedtls/library/psa_crypto_rsa.c|ota|aws-iot-device-sdk-embedded-C/libraries/standard|FreeRTOS-Plus/VisualStudio_StaticProjects|aws-iot-device-sdk-embedded-C/libraries/aws|FreeRTOS-Plus-TCP/tools|aws-iot-device-sdk-embedded-C/libraries/3rdparty|FreeRTOS-Plus/Source/FreeRTOS-Cellular-Interface|FreeRTOS-Plus/Test/FreeRTOS-Plus-TCP/Integration/Full-TCP-Suite/WinPCap/arch.c|FreeRTOS-Plus/Source/Application-Protocols/coreMQTT|ota/ota_http.c|FreeRTOS-Plus/Source/Application-Protocols/coreSNTP|IoTConnect/iotc-c-lib/tests|coreHTTP/tools|mbedtls/library/psa_crypto_driver_wrappers.c|cJSON/tests|cJSON/test.c|Unity/auto|FreeRTOS-Plus/Source/corePKCS11|FreeRTOS-Plus/Demo|tinycbor/open_memstream.c|FreeRTOS-Plus|FreeRTOS-Plus-TCP/docs|deviceDefender|Unity/docs|mbedtls/library/psa_crypto_storage.c|FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI|mbedtls/library/psa_crypto_aead.c|FreeRTOS-Plus/Source/Reliance-Edge|aws-iot-device-sdk-embedded-C/demos|mbedtls/library/psa_crypto_client.c|FreeRTOS-Plus/Source/Application-Protocols/coreMQTT-Agent|FreeRTOS-Plus/Source/Utilities|FreeRTOS-Plus/Source/AWS|mbedtls/library/psa_crypto_se.c|mbedtls/library/psa_crypto_hash.c|FreeRTOS-Plus/Source/FreeRTOS-Cellular-Modules|mbedtls/library/psa_crypto.c|pkcs11-psa|FreeRTOS-Plus/Source/FreeRTOS-Plus-IO|IoTConnect/iotc-c-lib/tools|trusted-firmware-m/interface/src|mbedtls/library/psa_crypto_cipher.c|FreeRTOS-Plus/ThirdParty|Unity/examples|FreeRTOS-Plus-TCP|aws-iot-device-sdk-embedded-C/platform/posix/ota_pal|mbedtls/library/psa_crypto_mac.c|aws-iot-device-sdk-embedded-C/integration-test|cJSON/fuzzing|mbedtls/library/psa_its_file.c|Unity/extras/memory/test|deviceShadow|FreeRTOS-Plus/Source/coreJSON|mbedtls/library/psa_crypto_ecp.c|FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP|mbedtls/library/psa_crypto_slot_management.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Libraries"/>
+						<entry excluding="Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_smbus_ex.c|Drivers/bsp/b_u585i_iot02a_ospi.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_smbus.c|Drivers/BSP/B-U585I-IOT02A/b_u585i_iot02a_eeprom.c|Drivers/bsp/b_u585i_iot02a_camera.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_timebase_rtc_alarm_template.c|Drivers/CMSIS/Core|Drivers/CommonIO/spi|Libraries|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/system_stm32u5xx.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_ll_usb.c|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/gcc/startup_stm32u595xx.s|lib/iotc-c-lib/tests|Drivers/BSP/Components/mx25lm51245g|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/system_stm32u5xx_ns.c|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/gcc/startup_stm32u599xx.s|Drivers/bsp/b_u585i_iot02a_audio.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_timebase_tim_template.c|Drivers/CommonIO/gpio|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/gcc/startup_stm32u585xx.s|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/gcc/startup_stm32u5a5xx.s|Drivers/CommonIO/uart|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/system_stm32u5xx_s.c|Drivers/CommonIO/test|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_timebase_rtc_wakeup_template.c|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/iar|lib/cJSON/tests|Drivers/BSP/B-U585I-IOT02A/b_u585i_iot02a_camera.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_msp_template.c|Drivers/bsp/b_u585i_iot02a_eeprom.c|Drivers/bsp/b_u585i_iot02a_usbpd_pwr.c|Drivers/BSP/Components/aps6408|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/arm|Inc|Drivers/BSP/B-U585I-IOT02A/b_u585i_iot02a_usbpd_pwr.c|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/gcc/startup_stm32u575xx.s|Drivers/BSP/B-U585I-IOT02A/b_u585i_iot02a_ospi.c|lib/cJSON/test.c|Src|Drivers/BSP/B-U585I-IOT02A/b_u585i_iot02a_light_sensor.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_smartcard_ex.c|Drivers/STM32U5xx_HAL/Src/stm32u5xx_hal_smartcard.c|Drivers/CMSIS/Device/ST/STM32U5xx/Source/Templates/gcc/startup_stm32u5a9xx.s|Drivers/BSP/B-U585I-IOT02A/b_u585i_iot02a_env_sensors.c|lib/cJSON/fuzzing" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Unity/extras/fixture/test|FreeRTOS-Plus-TCP/cmake_modules|FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace|coreHTTP/test|FreeRTOS-Plus/Source/Application-Protocols/coreHTTP|aws-iot-device-sdk-embedded-C/tools|Unity/test|mbedtls/library/psa_crypto_rsa.c|ota|aws-iot-device-sdk-embedded-C/libraries/standard|FreeRTOS-Plus/VisualStudio_StaticProjects|aws-iot-device-sdk-embedded-C/libraries/aws|FreeRTOS-Plus-TCP/tools|aws-iot-device-sdk-embedded-C/libraries/3rdparty|FreeRTOS-Plus/Source/FreeRTOS-Cellular-Interface|FreeRTOS-Plus/Test/FreeRTOS-Plus-TCP/Integration/Full-TCP-Suite/WinPCap/arch.c|FreeRTOS-Plus/Source/Application-Protocols/coreMQTT|ota/ota_http.c|FreeRTOS-Plus/Source/Application-Protocols/coreSNTP|IoTConnect/iotc-c-lib/tests|coreHTTP/tools|mbedtls/library/psa_crypto_driver_wrappers.c|cJSON/tests|cJSON/test.c|Unity/auto|FreeRTOS-Plus/Source/corePKCS11|FreeRTOS-Plus/Demo|tinycbor/open_memstream.c|FreeRTOS-Plus|Unity|FreeRTOS-Plus-TCP/docs|deviceDefender|Unity/docs|mbedtls/library/psa_crypto_storage.c|FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI|mbedtls/library/psa_crypto_aead.c|FreeRTOS-Plus/Source/Reliance-Edge|aws-iot-device-sdk-embedded-C/demos|mbedtls/library/psa_crypto_client.c|FreeRTOS-Plus/Source/Application-Protocols/coreMQTT-Agent|FreeRTOS-Plus/Source/Utilities|FreeRTOS-Plus/Source/AWS|mbedtls/library/psa_crypto_se.c|tools|mbedtls/library/psa_crypto_hash.c|FreeRTOS-Plus/Source/FreeRTOS-Cellular-Modules|mbedtls/library/psa_crypto.c|pkcs11-psa|FreeRTOS-Plus/Source/FreeRTOS-Plus-IO|coreJSON|IoTConnect/iotc-c-lib/tools|trusted-firmware-m/interface/src|mbedtls/library/psa_crypto_cipher.c|FreeRTOS-Plus/ThirdParty|Unity/examples|FreeRTOS-Plus-TCP|aws-iot-device-sdk-embedded-C/platform/posix/ota_pal|mbedtls/library/psa_crypto_mac.c|FreeRTOS-Libraries-Integration-Tests|aws-iot-device-sdk-embedded-C/integration-test|cJSON/fuzzing|mbedtls/library/psa_its_file.c|Unity/extras/memory/test|deviceShadow|FreeRTOS-Plus/Source/coreJSON|mbedtls/library/psa_crypto_ecp.c|FreeRTOS-Plus/Source/FreeRTOS-Plus-TCP|mbedtls/library/psa_crypto_slot_management.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Libraries"/>
 						<entry excluding="ota_pal|aws_freertos_time/azrtos_time.c|iotc_aws_rtos_layer|system_stm32u5xx_ns.c|stm32u5xx_hal_timebase_tim.c|stm32u5xx_hal_msp.c|awsrtos-layer|aws_freertos_time/iotc_mtb_time.c|startup_stm32u5xx_ns.c|aws_rtos_sdk" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
 					</sourceEntries>
 				</configuration>

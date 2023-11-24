@@ -42,7 +42,7 @@
 #include "iotconnect_lib.h"
 #include "iotconnect_telemetry.h"
 #include "iotconnect_event.h"
-#include "iotconnect_config.h"
+#include <config/iotconnect_config.h>
 
 // BSP-Specific
 #include "stm32u5xx.h"

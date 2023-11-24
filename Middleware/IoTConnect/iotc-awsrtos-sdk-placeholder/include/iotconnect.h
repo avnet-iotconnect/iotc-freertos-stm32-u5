@@ -14,6 +14,7 @@
 #include "iotconnect_telemetry.h"
 #include "iotconnect_discovery.h" // for sync enums
 #include "iotconnect_lib.h"
+#include "PkiObject.h"
 
 #ifdef __cplusplus
 extern "C" {
