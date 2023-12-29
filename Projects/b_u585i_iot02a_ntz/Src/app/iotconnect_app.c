@@ -13,8 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
-#include <math.h> // for sine function
+#include <math.h>
 
 /* Kernel includes. */
 #include "FreeRTOS.h"
@@ -52,18 +51,17 @@
 
 // Constants
 #define APP_VERSION 			"01.00.06"		// Version string in telemetry data
-#define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
+#define MQTT_PUBLISH_PERIOD_MS 	( 2000 )		// Size of statically allocated buffers for holding topic names and payloads.
 #define LED_BLINK_PERIOD_MS 500  // Blink period in milliseconds
 
 
 // Temperature Simulation Parameters
 static bool simulateTemperature = false;
-static const float startTempF = 65.0f;  // Starting temperature in Fahrenheit
-static const float endTempF = 425.0f;   // Ending temperature in Fahrenheit
-static const int simDurationSec = 30;   // Duration of the temperature rise in seconds
 static TickType_t simStartTime;
 static float presetTempF = 0.0f;  // Preset temperature
 static bool targetTemperatureReached = false;
+static bool grillState = false; // False means grill is off
+static int evenSurface = 1; // true means grill is on an even surface
 
 // @brief	IOTConnect configuration defined by application
 static IotConnectAwsrtosConfig awsrtos_config;
@@ -171,6 +169,17 @@ void iotconnect_app( void * pvParameters )
         sensor_error |= BSP_MOTION_SENSOR_GetAxes(0, MOTION_ACCELERO, &xAcceleroAxes);
         sensor_error |= BSP_MOTION_SENSOR_GetAxes(1, MOTION_MAGNETO, &xMagnetoAxes);
 
+        if (xAcceleroAxes.x > 100 || xAcceleroAxes.x < -100) {
+            grillState = false;  // Turn off the grill
+            presetTempF = 65.0f; // Reset temperature
+            evenSurface = 0; // Set even-surface telemetry to false
+            BSP_LED_Off(LED_GREEN);
+            // Log and handle this event
+            LogInfo("Unsafe accelerometer reading detected. Grill turned off for safety.");
+        } else {
+            evenSurface = 1; // Set even-surface to true after consecutive safe readings
+             }
+
         if (sensor_error == BSP_ERROR_NONE) {
             float simulatedTempF = simulateTemperatureRise();  // Get simulated temperature
 
@@ -187,8 +196,9 @@ void iotconnect_app( void * pvParameters )
         }
 
         TickType_t currentTime = xTaskGetTickCount();
-
-        if (!targetTemperatureReached) {
+        if (currentTempF == 65.0f) {
+                    BSP_LED_Off(LED_RED); // Turn off the red LED
+        } else if (!targetTemperatureReached) {
             if (currentTime - lastBlinkTime >= pdMS_TO_TICKS(LED_BLINK_PERIOD_MS)) {
                 lastBlinkTime = currentTime; // Correctly update the last blink time
                 ledState = !ledState;        // Toggle the LED state
@@ -226,9 +236,10 @@ static BaseType_t init_sensors( void )
     lBspError |= BSP_MOTION_SENSOR_Enable( 1, MOTION_MAGNETO );
     lBspError |= BSP_MOTION_SENSOR_SetOutputDataRate( 1, MOTION_MAGNETO, 1.0f );
 
+    BSP_LED_Off(LED_GREEN); // Ensure the grill switch is off at startup
+
     return( lBspError == BSP_ERROR_NONE ? pdTRUE : pdFALSE );
 }
-
 
 /* @brief 	Create JSON message containing telemetry data to publish
  *
@@ -258,6 +269,9 @@ static char *create_telemetry_json(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axe
 
     // Add the simulated temperature to the telemetry data
     iotcl_telemetry_set_number(msg, "simulated_temp", simulatedTempF);
+    iotcl_telemetry_set_number(msg, "set_temp", presetTempF);
+    iotcl_telemetry_set_bool(msg, "grill_state", grillState);
+    iotcl_telemetry_set_number(msg, "even_surface", evenSurface);
 
     const char* str = iotcl_create_serialized_string(msg, false);
 
@@ -300,23 +314,34 @@ static void on_command(IotclEventData data) {
 			}
 			command_status(data, true, command, "OK");
 		} else if (NULL != strstr(command, "set-temp")) {
-			// Parse the temperature value from the command and set it to presetTempF
-			// Assuming the command format is "set-temp value"
-			float tempVal;
-			if (sscanf(command, "set-temp %f", &tempVal) == 1) {
-				presetTempF = tempVal;
-				simulateTemperature = true;  // Start simulation
-				simStartTime = xTaskGetTickCount();
-				LogInfo("Temperature set to %.2f", presetTempF);
-				command_status(data, true, command, "Temperature set");
-			} else {
-				command_status(data, false, command, "Invalid temperature value");
-			}
-//		} else if(NULL != strstr(command, "start-temp-sim")) {
-//	        simulateTemperature = true;
-//	        simStartTime = xTaskGetTickCount();
-//	        LogInfo("Starting temperature simulation");
-//	        command_status(data, true, command, "Temperature simulation started");
+			 if (grillState) {  // Check if grill is on
+			                float tempVal;
+			                if (sscanf(command, "set-temp %f", &tempVal) == 1) {
+			                    presetTempF = tempVal;
+			                    simulateTemperature = true;  // Start simulation
+			                    simStartTime = xTaskGetTickCount();
+			                    LogInfo("Temperature set to %.2f", presetTempF);
+			                    command_status(data, true, command, "Temperature set");
+			                } else {
+			                    command_status(data, false, command, "Invalid temperature value");
+			                }
+			            } else {
+			                // Handle the case when grill is off
+			                LogInfo("Grill is off. Cannot set temperature.");
+			                command_status(data, false, command, "Grill is off. Cannot set temperature.");
+			            }
+		} else if (strstr(command, "grill_switch")) {
+		            if (strstr(command, "on")) {
+		                grillState = true;
+		                BSP_LED_On(LED_GREEN);  // Turn on green LED
+		                command_status(data, true, "grill_switch", "Grill is ON");
+		            } else if (strstr(command, "off")) {
+		                grillState = false;
+		                BSP_LED_Off(LED_GREEN);  // Turn off green LED
+		                command_status(data, true, "grill_switch", "Grill is OFF");
+		            } else {
+		                command_status(data, false, "grill_switch", "Invalid command value");
+		            }
 		} else {
 			LogInfo("command not recognized");
 			command_status(data, false, command, "Not implemented");
