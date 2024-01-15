@@ -92,6 +92,11 @@
 			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP</locationURI>
 		</link>
 		<link>
+			<name>Libraries/coreJSON</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreJSON</locationURI>
+		</link>
+		<link>
 			<name>Libraries/coreMQTT</name>
 			<type>2</type>
 			<locationURI>WORKSPACE_LOC/Middleware/FreeRTOS/coreMQTT/source</locationURI>

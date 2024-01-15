@@ -23,6 +23,7 @@
 #include "mbedtls_transport.h"
 
 #include "sys_evt.h"
+#include "ota.h"
 
 /* MQTT library includes. */
 #include "core_mqtt.h"
@@ -49,11 +50,15 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"01.00.06"		// Version string in telemetry data
+#define APP_VERSION 			"01.24.18"		// Version string in telemetry data
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
+#if !defined(IOTCONFIG_USE_DISCOVERY_SYNC)
 static IotConnectAwsrtosConfig awsrtos_config;
+#endif
+
+static bool is_downloading = false;
 
 // Prototypes
 static BaseType_t init_sensors( void );
@@ -61,6 +66,15 @@ static char* create_telemetry_json(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axe
 								BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data);
 static void on_command(IotclEventData data);
 static void command_status(IotclEventData data, bool status, const char *command_name, const char *message);
+static void on_ota(IotclEventData data);
+static bool is_ota_agent_file_initialized(void);
+static int split_url(const char *url, char **host_name, char**resource);
+static bool is_app_version_same_as_ota(const char *version);
+static bool app_needs_ota_update(const char *version);
+static int start_ota(char *url);
+
+extern void https_download_fw(const char* host, const char* path);
+
 
 
 /* @brief	Main IoT-Connect application task
@@ -70,9 +84,11 @@ static void command_status(IotclEventData data, bool status, const char *command
  * This is started by the initialization code in app_main.c which first performs board and
  * networking initialization
  */
-void iotconnect_app( void * pvParameters )
+void iotconnect_app( void * )
 {
     BaseType_t result = pdFALSE;
+
+    LogInfo( " ***** STARTING APP VERSION %s *****", APP_VERSION );
 
     result = init_sensors();
 
@@ -100,7 +116,7 @@ void iotconnect_app( void * pvParameters )
 	config->env = iotc_env;
 	config->duid = device_id;
 	config->cmd_cb = on_command;
-	config->ota_cb = NULL;
+	config->ota_cb = on_ota;
 	config->status_cb = NULL;
 	config->auth_info.type = IOTC_X509;
     config->auth_info.https_root_ca              = xPkiObjectFromLabel( TLS_HTTPS_ROOT_CA_CERT_LABEL );
@@ -125,6 +141,24 @@ void iotconnect_app( void * pvParameters )
 	awsrtos_config.telemetry_cd = telemetry_cd;
 	iotconnect_sdk_init(&awsrtos_config);
 #endif
+
+#if 1
+		while (!is_ota_agent_file_initialized()) {
+			LogInfo("Waiting for OTA agent (state=%d)...", OTA_GetState());
+			vTaskDelay(pdMS_TO_TICKS(2000));
+		}
+		switch (OTA_SetImageState(OtaImageStateAccepted)) {
+			case OtaErrNone:
+			case OtaErrNoActiveJob:
+				// these should be ok
+				break;
+			default:
+				LogError("ERROR: Failed to OTA_SetImageState. This image may reboot in failed state");
+		}
+#endif
+
+
+
 
     while (1) {
         /* Interpret sensor data */
@@ -266,7 +300,157 @@ static void command_status(IotclEventData data, bool status, const char *command
 
 	LogInfo("command: %s status=%s: %s\r\n", command_name, status ? "OK" : "Failed", message);
 	LogInfo("Sent CMD ack: %s\r\n", ack);
-	vTaskDelay(100);
 	iotconnect_sdk_send_packet(ack);
 	free((void*) ack);
 }
+
+
+
+static void on_ota(IotclEventData data) {
+    const char *message = NULL;
+    char *url = iotcl_clone_download_url(data, 0);
+    bool success = false;
+
+    LogInfo("\n\non_ota\n\n");
+
+
+    if (NULL != url) {
+    	LogInfo("Download URL is: %s\r\n", url);
+        const char *version = iotcl_clone_sw_version(data);
+        if (!version) {
+            success = true;
+            message = "Failed to parse message";
+        } else {
+        	// ignore wrong app versions in this application
+            success = true;
+            if (is_app_version_same_as_ota(version)) {
+            	LogWarn("OTA request for same version %s. Sending successn", version);
+            } else if (app_needs_ota_update(version)) {
+            	LogWarn("OTA update is required for version %s.", version);
+            }  else {
+            	LogWarn("Device firmware version %s is newer than OTA version %s. Sending failuren", APP_VERSION,
+                        version);
+                // Not sure what to do here. The app version is better than OTA version.
+                // Probably a development version, so return failure?
+                // The user should decide here.
+            }
+
+            is_downloading = true;
+            start_ota(url);
+            is_downloading = false; // we should reset soon
+        }
+
+
+        free((void*) url);
+        free((void*) version);
+    } else {
+        // compatibility with older events
+        // This app does not support FOTA with older back ends, but the user can add the functionality
+        const char *command = iotcl_clone_command(data);
+        if (NULL != command) {
+            // URL will be inside the command
+        	LogInfo("Command is: %s", command);
+            message = "Old back end URLS are not supported by the app";
+            free((void*) command);
+        }
+    }
+    const char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
+    if (NULL != ack) {
+    	LogInfo("Sent OTA ack: %s", ack);
+        iotconnect_sdk_send_packet(ack);
+        free((void*) ack);
+    }
+
+    LogInfo("on_ota done");
+}
+
+
+static bool is_ota_agent_file_initialized(void)
+{
+	// not really sure what state we should be looking for, but these should work:
+	switch(OTA_GetState()) {
+		case OtaAgentStateWaitingForJob:
+		case OtaAgentStateNoTransition:
+		case OtaAgentStateReady:
+		case OtaAgentStateSuspended:
+			return true;
+		default:
+			return false;
+	}
+}
+
+
+// Parses the URL into host and resource strings which will be malloced
+// Ensure to free the two pointers on success
+static int split_url(const char *url, char **host_name, char**resource) {
+    size_t host_name_start = 0;
+    size_t url_len = strlen(url);
+
+    if (!host_name || !resource) {
+    	LogError("split_url: Invalid usage");
+        return -1;
+    }
+    *host_name = NULL;
+    *resource = NULL;
+    int slash_count = 0;
+    for (size_t i = 0; i < url_len; i++) {
+        if (url[i] == '/') {
+            slash_count++;
+            if (slash_count == 2) {
+                host_name_start = i + 1;
+            } else if (slash_count == 3) {
+                const size_t slash_start = i;
+                const size_t host_name_len = i - host_name_start;
+                const size_t resource_len = url_len - i;
+                *host_name = malloc(host_name_len + 1); //+1 for null
+                if (NULL == *host_name) {
+                    return -2;
+                }
+                memcpy(*host_name, &url[host_name_start], host_name_len);
+                (*host_name)[host_name_len] = 0; // terminate the string
+
+                *resource = malloc(resource_len + 1); //+1 for null
+                if (NULL == *resource) {
+                    free(*host_name);
+                    return -3;
+                }
+                memcpy(*resource, &url[slash_start], resource_len);
+                (*resource)[resource_len] = 0; // terminate the string
+
+                return 0;
+            }
+        }
+    }
+    return -4; // URL could not be parsed
+}
+
+static int start_ota(char *url) {
+    char * host_name;
+    char * resource;
+
+    LogInfo ("start_ota: %s", url);
+
+    int status = split_url(url, &host_name, &resource);
+    if (status) {
+        LogError("start_ota: Error while splitting the URL, code: 0x%x", status);
+        return status;
+    }
+
+    https_download_fw(host_name, resource);
+
+    free(host_name);
+    free(resource);
+
+    return status;
+}
+
+static bool is_app_version_same_as_ota(const char *version) {
+    return strcmp(APP_VERSION, version) == 0;
+}
+
+static bool app_needs_ota_update(const char *version) {
+    return strcmp(APP_VERSION, version) < 0;
+}
+
+
+

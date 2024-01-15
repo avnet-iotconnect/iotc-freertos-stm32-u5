@@ -6,7 +6,7 @@
  */
 
 #include "logging_levels.h"
-#define LOG_LEVEL	LOG_DEBUG
+#define LOG_LEVEL	LOG_WARN
 #include "logging.h"
 
 /* Standard library includes */

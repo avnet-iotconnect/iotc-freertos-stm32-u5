@@ -6,7 +6,7 @@
  */
 
 
-#define LOG_LEVEL    LOG_INFO
+#define LOG_LEVEL    LOG_WARN
 
 /* Standard includes. */
 #include <string.h>
@@ -52,7 +52,7 @@
 #define MQTT_SUBSCRIBE_TOPIC_STR_LEN           	( 256 )
 
 // @brief 	Size of statically allocated buffers for holding payloads.
-#define confgPAYLOAD_BUFFER_LENGTH           	( 256 )
+#define confgPAYLOAD_BUFFER_LENGTH           	( 1024 )
 
 // @brief	Size of statically allocated buffers for holding topic names and payloads.
 #define MQTT_PUBLISH_MAX_LEN                 ( 1024 )

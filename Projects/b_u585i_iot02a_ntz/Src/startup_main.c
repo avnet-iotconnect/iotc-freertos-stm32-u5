@@ -44,6 +44,7 @@
 #include "test_execution_config.h"
 #include "cli/cli.h"
 #include "awsrtos_time.h"
+#include "ota.h"
 
 
 /*	Number of polls and interval between polls to check if sntp time has synced */
@@ -68,6 +69,8 @@ EventGroupHandle_t xSystemEvents = NULL;
 extern void net_main( void * pvParameters );
 extern void sntp_task( void * );
 extern void iotconnect_app( void * );
+extern void vOTAUpdateTask( void * pvParam );
+extern void vIOTC_Ota_Handler(void *);
 extern void otaPal_EarlyInit( void );
 
 
@@ -179,7 +182,6 @@ static void vRelocateVectorTable( void )
     __enable_irq();
 }
 
-
 void vInitTask( void * pvArgs )
 {
     BaseType_t xResult;
@@ -202,7 +204,7 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
-//        otaPal_EarlyInit();
+        otaPal_EarlyInit();
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
@@ -215,9 +217,6 @@ void vInitTask( void * pvArgs )
 
 
     ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
-
-//    xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
-//    configASSERT( xResult == pdTRUE );
 
     xResult = xTaskCreate( &net_main, "MxNet", 1024, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
@@ -241,6 +240,14 @@ void vInitTask( void * pvArgs )
 
     	vTaskDelay(pdMS_TO_TICKS(SNTP_SYNC_POLL_INTERVAL_MS));
     }
+
+#if 0
+    xResult = xTaskCreate( vIOTC_Ota_Handler, "IOTC OTA", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
+    configASSERT( xResult == pdTRUE );
+#else
+    xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
+    configASSERT( xResult == pdTRUE );
+#endif
 
     xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 2048, NULL, 5, NULL );
     configASSERT( xResult == pdTRUE );
