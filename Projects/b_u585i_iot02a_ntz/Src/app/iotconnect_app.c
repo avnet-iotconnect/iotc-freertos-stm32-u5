@@ -50,7 +50,7 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"01.24.18"		// Version string in telemetry data
+#define APP_VERSION 			"01.24.20"		// Version string in telemetry data
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
