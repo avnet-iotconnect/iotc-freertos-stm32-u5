@@ -37,7 +37,7 @@ typedef void (*IotConnectStatusCallback)(IotConnectConnectionStatus data);
 
 typedef struct {
 	const char *host;
-	const char *telemetry_cd;		// Device template "cd"
+//	const char *telemetry_cd;		// Device template "cd"
 } IotConnectAwsrtosConfig;
 
 
@@ -45,7 +45,6 @@ typedef struct {
 typedef struct {
     IotConnectAuthType type;
 
-    PkiObject_t https_root_ca;
     PkiObject_t mqtt_root_ca;
 
     union { // union because we may support different types of auth
@@ -97,6 +96,9 @@ void iotconnect_sdk_receive();
 void iotconnect_sdk_poll(int wait_time_ms);
 
 void iotconnect_sdk_disconnect();
+
+extern void iotc_ota_fw_download(const char* host, const char* path);
+
 
 #ifdef __cplusplus
 }

@@ -50,7 +50,7 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"01.24.20"		// Version string in telemetry data
+#define APP_VERSION 			"01.24.23"		// Version string in telemetry data
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
@@ -59,6 +59,8 @@ static IotConnectAwsrtosConfig awsrtos_config;
 #endif
 
 static bool is_downloading = false;
+
+
 
 // Prototypes
 static BaseType_t init_sensors( void );
@@ -72,9 +74,6 @@ static int split_url(const char *url, char **host_name, char**resource);
 static bool is_app_version_same_as_ota(const char *version);
 static bool app_needs_ota_update(const char *version);
 static int start_ota(char *url);
-
-extern void https_download_fw(const char* host, const char* path);
-
 
 
 /* @brief	Main IoT-Connect application task
@@ -116,10 +115,14 @@ void iotconnect_app( void * )
 	config->env = iotc_env;
 	config->duid = device_id;
 	config->cmd_cb = on_command;
+
+#if 0
 	config->ota_cb = on_ota;
+#else
+	config->ota_cb = NULL;
+#endif
 	config->status_cb = NULL;
 	config->auth_info.type = IOTC_X509;
-    config->auth_info.https_root_ca              = xPkiObjectFromLabel( TLS_HTTPS_ROOT_CA_CERT_LABEL );
     config->auth_info.mqtt_root_ca               = xPkiObjectFromLabel( TLS_MQTT_ROOT_CA_CERT_LABEL );
     config->auth_info.data.cert_info.device_cert = xPkiObjectFromLabel( TLS_CERT_LABEL );
     config->auth_info.data.cert_info.device_key  = xPkiObjectFromLabel( TLS_KEY_PRV_LABEL );;
@@ -130,19 +133,17 @@ void iotconnect_app( void * )
 #else
     // Not using Discovery and Sync so some additional settings, are obtained from the CLI,
     char *mqtt_endpoint_url = KVStore_getStringHeap(CS_CORE_MQTT_ENDPOINT, NULL);
-    char *telemetry_cd = KVStore_getStringHeap(CS_IOTC_TELEMETRY_CD, NULL);
 
-    if (mqtt_endpoint_url == NULL || telemetry_cd == NULL) {
-    	LogError ("IOTC configuration, mqtt_endpoint, telemetry_cd not set");
+    if (mqtt_endpoint_url == NULL) {
+    	LogError ("IOTC configuration, mqtt_endpoint not set");
     	vTaskDelete( NULL );
     }
 
     awsrtos_config.host = mqtt_endpoint_url;
-	awsrtos_config.telemetry_cd = telemetry_cd;
 	iotconnect_sdk_init(&awsrtos_config);
 #endif
 
-#if 1
+#if 0
 		while (!is_ota_agent_file_initialized()) {
 			LogInfo("Waiting for OTA agent (state=%d)...", OTA_GetState());
 			vTaskDelay(pdMS_TO_TICKS(2000));
@@ -156,8 +157,6 @@ void iotconnect_app( void * )
 				LogError("ERROR: Failed to OTA_SetImageState. This image may reboot in failed state");
 		}
 #endif
-
-
 
 
     while (1) {
@@ -177,6 +176,8 @@ void iotconnect_app( void * )
             	LogError("Could not create telemetry data\n");
                 vTaskDelete( NULL );
             }
+
+            LogDebug("Telemetry: %s\n", json_message);
 
 			iotconnect_sdk_send_packet(json_message);  // underlying code will report an error
 			iotcl_destroy_serialized(json_message);
@@ -424,9 +425,10 @@ static int split_url(const char *url, char **host_name, char**resource) {
     return -4; // URL could not be parsed
 }
 
-static int start_ota(char *url) {
-    char * host_name;
-    char * resource;
+static int start_ota(char *url)
+{
+    char *host_name;
+    char *resource;
 
     LogInfo ("start_ota: %s", url);
 
@@ -436,7 +438,7 @@ static int start_ota(char *url) {
         return status;
     }
 
-    https_download_fw(host_name, resource);
+    iotc_ota_fw_download(host_name, resource);
 
     free(host_name);
     free(resource);

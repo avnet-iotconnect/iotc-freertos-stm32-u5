@@ -204,7 +204,9 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
+#if 0
         otaPal_EarlyInit();
+#endif
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
@@ -230,7 +232,7 @@ void vInitTask( void * pvArgs )
     HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
     HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
 
-    xResult = xTaskCreate( &sntp_task, "sntp", 4096, NULL, 23, NULL );
+    xResult = xTaskCreate( &sntp_task, "sntp", 2048, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
 
     for (int t=0; t < SNTP_SYNC_POLL_MAX; t++) {
@@ -242,14 +244,11 @@ void vInitTask( void * pvArgs )
     }
 
 #if 0
-    xResult = xTaskCreate( vIOTC_Ota_Handler, "IOTC OTA", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
-    configASSERT( xResult == pdTRUE );
-#else
     xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
     configASSERT( xResult == pdTRUE );
 #endif
 
-    xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 2048, NULL, 5, NULL );
+    xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 4096, NULL, 5, NULL );
     configASSERT( xResult == pdTRUE );
 
     while( 1 )

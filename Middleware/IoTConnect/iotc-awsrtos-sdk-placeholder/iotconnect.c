@@ -6,7 +6,7 @@
  */
 
 #include "logging_levels.h"
-#define LOG_LEVEL	LOG_WARN
+#define LOG_LEVEL	LOG_INFO
 #include "logging.h"
 
 /* Standard library includes */
@@ -59,18 +59,20 @@
 #define DISCOVERY_SERVER_HOST	"awsdiscovery.iotconnect.io"
 
 /* Variables */
-static char response_buffer[4096] = {0};		// FIXME: Response size has fluctuated, giving errors, insufficient space, increased to 4KB.
+static char response_buffer[4096] = {0};		// FIXME: HTTPS request/response buffer, dynamically allocate.
+												// FIXME: dynamically allocate and free after use
+static char discovery_method_path[256];			// FIXME: dynamically allocate and free after use size
+static char identity_method_path[256];			// FIXME: dynamically allocate and free after use
 static IotConnectClientConfig config = { 0 };
 static IotclConfig lib_config = { 0 };
-//static IotConnectAwsrtosConfig awsrtos_config = { 0 };
 static IotclSyncResult last_sync_result = IOTCL_SR_UNKNOWN_DEVICE_STATUS;
-static char discovery_method_path[256];
-static char identity_method_path[256];
+static IotConnectAWSMQTTConfig awsmqtt_config;
 
 
 // Prototypes
 static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *env);
 static IotclSyncResponse *run_http_sync(const char *host, const char *disc_method_path, const char *device_id);
+
 
 
 /* @brief   Pre-initialization of SDK's configuration and return pointer to it.
@@ -82,7 +84,6 @@ IotConnectClientConfig* iotconnect_sdk_init_and_get_config(void) {
 }
 
 
-IotConnectAWSMQTTConfig awsmqtt_config;
 
 /* @brief	This the Initialization os IoTConnect SDK
  *
@@ -115,7 +116,8 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
     lib_config.device.duid = config.duid;
 
 #if defined(IOTCONFIG_USE_DISCOVERY_SYNC)
-    iotconnect_https_init(config.auth_info.https_root_ca);
+    PkiObject_t https_ca_cert = PKI_OBJ_PEM((const unsigned char *)GODADDY_ROOT_CERTIFICATE_AUTHORITY_G2, sizeof(GODADDY_ROOT_CERTIFICATE_AUTHORITY_G2));
+    iotconnect_https_init(https_ca_cert);
 
     LogInfo("IOTC: Performing discovery...\r\n");
 
@@ -125,6 +127,7 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
         LogError("IOTC: discovery failed\r\n");
     	return -1;
     }
+
     LogInfo("IOTC: Discovery response parsing successful. Performing sync...\r\n");
 
     sync_response = run_http_sync(discovery_response->host, discovery_response->path, config.duid);
@@ -145,8 +148,6 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
 #else
     LogInfo("IOTC: setting cd, duid and host from supplied config");
 
-    // Get mqtt endpoint device id, telemetry_cd from the CLI
-	lib_config.telemetry.cd = awsrtos_config->telemetry_cd;
     awsmqtt_config.device_name = config.duid;
     awsmqtt_config.host = awsrtos_config->host;
     awsmqtt_config.port = 8883;
@@ -201,8 +202,6 @@ static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *
 	char *response_body = NULL;
 	IotConnectHttpResponse http_response;
 	IotclDiscoveryResponse *response;
-
-	LogInfo("run_http_discovery");
 
     snprintf (discovery_method_path, sizeof discovery_method_path, "/api/v2.1/dsdk/cpId/%s/env/%s", cpid, env);
 

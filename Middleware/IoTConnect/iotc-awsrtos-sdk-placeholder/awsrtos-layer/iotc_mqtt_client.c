@@ -6,7 +6,7 @@
  */
 
 
-#define LOG_LEVEL    LOG_WARN
+#define LOG_LEVEL    LOG_INFO
 
 /* Standard includes. */
 #include <string.h>
@@ -43,7 +43,10 @@
 #define SUBSCRIBE_TOPIC_FORMAT   "iot/%s/cmd"
 
 // @brief 	Format of topic string used to publish events (e.g. telemetry and acknowledgements for this device
-#define PUBLISH_TOPIC_FORMAT	"devices/%s/messages/events/"
+//#define PUBLISH_TOPIC_FORMAT	"devices/%s/messages/events/"
+
+#define PUBLISH_TOPIC_FORMAT	"$aws/rules/msg_d2c_rpt/%s/2.1/0"
+//#define PUBLISH_TOPIC_FORMAT	"$aws/things/%s/shadow/name/setting_info/report"
 
 // @brief 	Queue size of acknowledgements offloaded to the vMQTTSubscribeTask
 #define ACK_MSG_Q_SIZE	5
@@ -118,7 +121,6 @@ int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrt
     IotclConfig *iotcl_config;
     MQTTStatus_t xMQTTStatus;
     const char * pcDeviceId;
-	const char * pcTelemetryCd;
 	int lSubTopicLen = 0;
 	int lPubTopicLen = 0;
 
@@ -132,19 +134,10 @@ int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrt
     }
 
 	pcDeviceId = iotcl_config->device.duid;
-	pcTelemetryCd = iotcl_config->telemetry.cd;
-
-    LogInfo("cd = %08x", (uint32_t)iotcl_config->telemetry.cd);
-    vTaskDelay(200);
 
 	if (pcDeviceId == NULL) {
 		LogError( "Error getting the thing_name setting." );
 		vTaskDelete( NULL );
-	}
-
-	if (pcTelemetryCd == NULL) {
-		LogError( "Error getting the telemetry_cd setting." );
-		return -1;
 	}
 
     LogInfo(".. checked for null telemetry and device id");
@@ -156,15 +149,16 @@ int awsmqtt_client_init(IotConnectAWSMQTTConfig *awsmqtt_config, IotConnectAwsrt
 		vTaskDelete( NULL );
 	}
 
-	lPubTopicLen = snprintf(xGlobalAWSMQTTContext.pubTopicString, ( size_t ) MQTT_PUBLISH_TOPIC_STR_LEN, PUBLISH_TOPIC_FORMAT, pcDeviceId, pcTelemetryCd);
+	lPubTopicLen = snprintf(xGlobalAWSMQTTContext.pubTopicString, ( size_t ) MQTT_PUBLISH_TOPIC_STR_LEN, PUBLISH_TOPIC_FORMAT, pcDeviceId);
 	if( ( lPubTopicLen <= 0 ) || ( lPubTopicLen > MQTT_PUBLISH_TOPIC_STR_LEN) ) {
 		LogError( "Error while constructing ack publsh topic string, len: %d.", lPubTopicLen );
 		return -1;
 	}
 
 
-    LogInfo(".. generated sub and pub topic strings");
-    vTaskDelay(200);
+    LogInfo("Generated sub and pub topic strings...");
+	LogInfo("pub: %s", xGlobalAWSMQTTContext.pubTopicString);
+	LogInfo("sub: %s", xGlobalAWSMQTTContext.subTopicString);
 
 
 	xResult = vSetMQTTConfig(awsmqtt_config->host,

@@ -128,8 +128,6 @@ void sntp_task( void * pvParameters )
 
     iotc_stm_aws_time_obtain(SNTP_SERVER_NAME);
 
-    while(1) {
-    	vTaskDelay(5000);
-    }
+    vTaskDelete(NULL);
 }
 

@@ -38,7 +38,6 @@ typedef enum KvStoreEnum
     CS_CORE_MQTT_PORT,
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
-	CS_IOTC_TELEMETRY_CD,
 	CS_IOTC_CPID,
 	CS_IOTC_ENV,
 	CS_NUM_KEYS
@@ -99,10 +98,6 @@ typedef enum KvStoreEnum
 #define WIFI_SECURITY_DFLT    ""
 #endif /* !defined ( WIFI_SECURITY_DFLT ) */
 
-#if !defined( IOTC_TELEMETRY_CD_DFLT )
-#define IOTC_TELEMETRY_CD_DFLT    ""
-#endif /* !defined ( IOTC_TELEMETRY_CD_DFLT ) */
-
 #if !defined( IOTC_CPID_DFLT )
 #define IOTC_CPID_DFLT    ""
 #endif /* !defined ( IOTC_CPID_DFLT ) */
@@ -121,7 +116,6 @@ typedef enum KvStoreEnum
         "mqtt_port",       \
         "wifi_ssid",       \
         "wifi_credential", \
-        "telemetry_cd",    \
 		"cpid",			   \
 		"env"			   \
 	}
@@ -133,7 +127,6 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_UINT32, MQTT_PORT_DFLT ),     /* CS_CORE_MQTT_PORT */     \
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
-        KV_DFLT( KV_TYPE_STRING, IOTC_TELEMETRY_CD_DFLT ), /* CS_IOTC_TELEMETRY_CD */ \
         KV_DFLT( KV_TYPE_STRING, IOTC_CPID_DFLT ), 	   /* CS_IOTC_CPID */          \
         KV_DFLT( KV_TYPE_STRING, IOTC_ENV_DFLT ), 	   /* CS_IOTC_ENV */           \
 	}
