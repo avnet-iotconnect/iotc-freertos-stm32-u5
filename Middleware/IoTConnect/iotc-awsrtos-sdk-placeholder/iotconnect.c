@@ -138,7 +138,6 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
 
     LogInfo("IOTC: Sync response parsing successful.\r\n");
 
-	lib_config.telemetry.cd = sync_response->cd;
     awsmqtt_config.device_name = config.duid;
     awsmqtt_config.host = sync_response->broker.host;
     awsmqtt_config.port = sync_response->broker.port;
@@ -214,6 +213,8 @@ static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *
 		return NULL;
     }
 
+    LogDebug("sync_response:%s\n", http_response.data);
+
     if (http_response.data == NULL) {
         LogError("Unable to parse HTTP response,", &response);
         return NULL;
@@ -265,6 +266,8 @@ static IotclSyncResponse *run_http_sync(const char *host, const char *disc_metho
     	LogError(("Failed the discovery HTTP Get request"));
 		return NULL;
     }
+
+    LogDebug("sync_response:%s\n", http_response.data);
 
 	response = iotcl_discovery_parse_sync_response(http_response.data);
 
