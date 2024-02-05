@@ -50,7 +50,7 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"01.24.23"		// Version string in telemetry data
+#define APP_VERSION 			"01.24.23"		// Version string
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
@@ -116,11 +116,12 @@ void iotconnect_app( void * )
 	config->duid = device_id;
 	config->cmd_cb = on_command;
 
-#if 0
+#ifdef IOTCONFIG_ENABLE_OTA
 	config->ota_cb = on_ota;
 #else
 	config->ota_cb = NULL;
 #endif
+
 	config->status_cb = NULL;
 	config->auth_info.type = IOTC_X509;
     config->auth_info.mqtt_root_ca               = xPkiObjectFromLabel( TLS_MQTT_ROOT_CA_CERT_LABEL );
@@ -143,7 +144,7 @@ void iotconnect_app( void * )
 	iotconnect_sdk_init(&awsrtos_config);
 #endif
 
-#if 0
+#ifdef IOTCONFIG_ENABLE_OTA
 		while (!is_ota_agent_file_initialized()) {
 			LogInfo("Waiting for OTA agent (state=%d)...", OTA_GetState());
 			vTaskDelay(pdMS_TO_TICKS(2000));
@@ -157,7 +158,6 @@ void iotconnect_app( void * )
 				LogError("ERROR: Failed to OTA_SetImageState. This image may reboot in failed state");
 		}
 #endif
-
 
     while (1) {
         /* Interpret sensor data */
@@ -306,7 +306,7 @@ static void command_status(IotclEventData data, bool status, const char *command
 }
 
 
-
+#ifdef IOTCONFIG_ENABLE_OTA
 static void on_ota(IotclEventData data) {
     const char *message = NULL;
     char *url = iotcl_clone_download_url(data, 0);
@@ -376,7 +376,10 @@ static bool is_ota_agent_file_initialized(void)
 		case OtaAgentStateSuspended:
 			return true;
 		default:
+		{
+			LogInfo ("OTA agegent file not initialized: state:$d", OTA_GetState());
 			return false;
+		}
 	}
 }
 
@@ -454,5 +457,6 @@ static bool app_needs_ota_update(const char *version) {
     return strcmp(APP_VERSION, version) < 0;
 }
 
+#endif
 
 

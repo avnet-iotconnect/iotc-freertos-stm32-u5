@@ -44,6 +44,7 @@
 #include "test_execution_config.h"
 #include "cli/cli.h"
 #include "awsrtos_time.h"
+#include "config/iotconnect_config.h"
 #include "ota.h"
 
 
@@ -130,6 +131,7 @@ static int fs_init( void )
         }
     }
 
+#ifdef IOTCONFIG_ENABLE_OTA
     if( lfs_stat( &xLfsCtx, "/ota", &xDirInfo ) == LFS_ERR_NOENT )
     {
         err = lfs_mkdir( &xLfsCtx, "/ota" );
@@ -139,6 +141,7 @@ static int fs_init( void )
             LogError( "Failed to create /ota directory." );
         }
     }
+#endif
 
     if( err == 0 )
     {
@@ -204,7 +207,7 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
-#if 0
+#ifdef IOTCONFIG_ENABLE_OTA
         otaPal_EarlyInit();
 #endif
 
@@ -243,7 +246,7 @@ void vInitTask( void * pvArgs )
     	vTaskDelay(pdMS_TO_TICKS(SNTP_SYNC_POLL_INTERVAL_MS));
     }
 
-#if 0
+#ifdef IOTCONFIG_ENABLE_OTA
     xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
     configASSERT( xResult == pdTRUE );
 #endif

@@ -58,11 +58,26 @@
 #define HTTPS_PORT				443
 #define DISCOVERY_SERVER_HOST	"awsdiscovery.iotconnect.io"
 
+#define RESPONSE_BUFFER_SZ		4096
+#define METHOD_BUFFER_SZ		256
+
 /* Variables */
-static char response_buffer[4096] = {0};		// FIXME: HTTPS request/response buffer, dynamically allocate.
+
+//static char response_buffer[4096] = {0};		// FIXME: HTTPS request/response buffer, dynamically allocate.
 												// FIXME: dynamically allocate and free after use
-static char discovery_method_path[256];			// FIXME: dynamically allocate and free after use size
-static char identity_method_path[256];			// FIXME: dynamically allocate and free after use
+//static char discovery_method_path[256];			// FIXME: dynamically allocate and free after use size
+//static char identity_method_path[256];			// FIXME: dynamically allocate and free after use
+//#else
+
+#if defined(IOTCONFIG_USE_DISCOVERY_SYNC)
+static int alloc_discovery_sync_http_buffers(void);
+static void free_discovery_sync_http_buffers(void);
+static char *response_buffer;
+static char *discovery_method_path;			// FIXME: Can we use a single buffer (for all 3 items)
+static char *identity_method_path;
+
+#endif
+
 static IotConnectClientConfig config = { 0 };
 static IotclConfig lib_config = { 0 };
 static IotclSyncResult last_sync_result = IOTCL_SR_UNKNOWN_DEVICE_STATUS;
@@ -121,11 +136,17 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
 
     LogInfo("IOTC: Performing discovery...\r\n");
 
+    if (alloc_discovery_sync_http_buffers() != 0) {
+    	LogError("Failed to allocate buffers for discovery/sync");
+    	return -1;
+    }
+
     discovery_response = run_http_discovery(config.cpid, config.env);
 
     if (NULL == discovery_response) {
         LogError("IOTC: discovery failed\r\n");
-    	return -1;
+        free_discovery_sync_http_buffers();
+        return -1;
     }
 
     LogInfo("IOTC: Discovery response parsing successful. Performing sync...\r\n");
@@ -133,8 +154,11 @@ int iotconnect_sdk_init(IotConnectAwsrtosConfig *awsrtos_config) {
     sync_response = run_http_sync(discovery_response->host, discovery_response->path, config.duid);
     if (NULL == sync_response) {
         LogError("IOTC: sync failed\r\n");
+        free_discovery_sync_http_buffers();
         return -2;
     }
+
+    free_discovery_sync_http_buffers();
 
     LogInfo("IOTC: Sync response parsing successful.\r\n");
 
@@ -189,6 +213,52 @@ void iotconnect_sdk_send_packet(const char *data) {
 
 #if defined(IOTCONFIG_USE_DISCOVERY_SYNC)
 
+int alloc_discovery_sync_http_buffers(void)
+{
+	response_buffer = malloc(RESPONSE_BUFFER_SZ);
+	if (response_buffer == NULL) {
+		LogError("IOTC: Failed to allocate disconvery/sync response buffer");
+		return -1;
+	}
+
+	discovery_method_path = malloc(METHOD_BUFFER_SZ);
+	if (discovery_method_path == NULL) {
+		LogError("IOTC: Failed to allocate disconvery methed path");
+		free(response_buffer);
+		response_buffer = NULL;
+		return -1;
+	}
+
+	identity_method_path = malloc(METHOD_BUFFER_SZ);
+	if (identity_method_path == NULL) {
+		LogError("IOTC: Failed to allocate sync methed path");
+		free(discovery_method_path);
+		free(response_buffer);
+		discovery_method_path = NULL;
+		response_buffer = NULL;
+		return -1;
+	}
+
+	return 0;
+}
+
+
+void free_discovery_sync_http_buffers(void)
+{
+	if (response_buffer != NULL) {
+		free(response_buffer);
+	}
+
+	if (discovery_method_path == NULL) {
+		free(discovery_method_path);
+	}
+
+	if (identity_method_path == NULL) {
+		free(identity_method_path);
+	}
+}
+
+
 /* @brief	Send a discovery and identity HTTP Get request to populate config fields.
  *
  * SEE SOURCES    https://github.com/aws/aws-iot-device-sdk-embedded-C/blob/main/demos/http/http_demo_plaintext/http_demo_plaintext.c
@@ -202,11 +272,12 @@ static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *
 	IotConnectHttpResponse http_response;
 	IotclDiscoveryResponse *response;
 
-    snprintf (discovery_method_path, sizeof discovery_method_path, "/api/v2.1/dsdk/cpId/%s/env/%s", cpid, env);
+	discovery_method_path[0] = '\0';
+    snprintf (discovery_method_path, METHOD_BUFFER_SZ, "/api/v2.1/dsdk/cpId/%s/env/%s", cpid, env);
 
 	returnStatus = iotc_send_http_request(&http_response, DISCOVERY_SERVER_HOST, HTTPS_PORT,
 			                        "GET", discovery_method_path,
-									response_buffer, sizeof response_buffer);
+									response_buffer, RESPONSE_BUFFER_SZ);
 
     if (returnStatus != HTTPSuccess) {
     	LogError(("Failed the discovery HTTP Get request"));
@@ -221,7 +292,7 @@ static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *
     }
     char *json_start = strstr(http_response.data, "{");
     if (NULL == json_start) {
-        LogError("No json response from server.", &response);
+        LogError("No json response from discovery server.", &response);
         return NULL;
     }
 
@@ -255,11 +326,11 @@ static IotclSyncResponse *run_http_sync(const char *host, const char *disc_metho
 	IotConnectHttpResponse http_response;
 	IotclSyncResponse *response;
 
-    snprintf (identity_method_path, sizeof identity_method_path, "%s/uid/%s", disc_method_path, device_id);
+    snprintf (identity_method_path, METHOD_BUFFER_SZ, "%s/uid/%s", disc_method_path, device_id);
 
 	returnStatus = iotc_send_http_request(&http_response, host, HTTPS_PORT,
 			                        "GET", identity_method_path,
-									response_buffer, sizeof response_buffer);
+									response_buffer, RESPONSE_BUFFER_SZ);
 
 
     if (returnStatus != HTTPSuccess) {
