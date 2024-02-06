@@ -31,7 +31,7 @@
 #ifndef OTA_PAL_H_
 #define OTA_PAL_H_
 
-#include "ota.h"
+#include "new_ota.h"
 
 /**
  * @brief Abort an OTA transfer.
@@ -182,33 +182,10 @@ OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const pFileContext );
  *   OtaPalRejectFailed: failed to roll back the update image as requested by OtaImageStateRejected.
  *   OtaPalCommitFailed: failed to make the update image permanent as requested by OtaImageStateAccepted.
  */
+#if 1
 OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pFileContext,
                                              OtaImageState_t eState );
-
-/**
- * @brief Get the state of the OTA update image.
- *
- * We read this at OTA_Init time and when the latest OTA job reports itself in self
- * test. If the update image is in the "pending commit" state, we start a self test
- * timer to assure that we can successfully connect to the OTA services and accept
- * the OTA update image within a reasonable amount of time (user configurable). If
- * we don't satisfy that requirement, we assume there is something wrong with the
- * firmware and automatically reset the device, causing it to roll back to the
- * previously known working code.
- *
- * If the update image state is not in "pending commit," the self test timer is
- * not started.
- *
- * @param[in] pFileContext File context of type OtaFileContext_t.
- *
- * @return An OtaPalImageState_t. One of the following:
- *   OtaPalImageStatePendingCommit (the new firmware image is in the self test phase)
- *   OtaPalImageStateValid         (the new firmware image is already committed)
- *   OtaPalImageStateInvalid       (the new firmware image is invalid or non-existent)
- *
- *   NOTE: OtaPalImageStateUnknown should NEVER be returned and indicates an implementation error.
- */
-OtaPalImageState_t otaPal_GetPlatformImageState( OtaFileContext_t * const pFileContext );
+#endif
 
 /**
  * @brief Reset the device.

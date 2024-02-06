@@ -45,8 +45,7 @@
 #include "cli/cli.h"
 #include "awsrtos_time.h"
 #include "config/iotconnect_config.h"
-#include "ota.h"
-
+#include "new_ota.h"
 
 /*	Number of polls and interval between polls to check if sntp time has synced */
 #define SNTP_SYNC_POLL_MAX 10
@@ -70,8 +69,6 @@ EventGroupHandle_t xSystemEvents = NULL;
 extern void net_main( void * pvParameters );
 extern void sntp_task( void * );
 extern void iotconnect_app( void * );
-extern void vOTAUpdateTask( void * pvParam );
-extern void vIOTC_Ota_Handler(void *);
 extern void otaPal_EarlyInit( void );
 
 
@@ -209,6 +206,25 @@ void vInitTask( void * pvArgs )
 
 #ifdef IOTCONFIG_ENABLE_OTA
         otaPal_EarlyInit();
+
+        /*
+         * TODO: Check if this is the first boot of a new image or pending self test.
+         */
+
+        /*
+         * Users can add code to check sanity of image.  If we get a hardware reset or watchdog reset
+         * prior to otaPal_SetPlatformImageState being called then the OTA mechanism will discard the
+         * current image and revert to the previous image.
+         *
+         * The sanity of the image can be checked here or elsewhere, perhaps once the device is
+         * connected.  For demonstration purposes we set the image to accepted here.
+         */
+
+        if (1) {
+        	otaPal_SetPlatformImageState(NULL, OtaImageStateAccepted);
+        } else {
+        	otaPal_SetPlatformImageState(NULL, OtaImageStateRejected);
+        }
 #endif
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
@@ -245,11 +261,6 @@ void vInitTask( void * pvArgs )
 
     	vTaskDelay(pdMS_TO_TICKS(SNTP_SYNC_POLL_INTERVAL_MS));
     }
-
-#ifdef IOTCONFIG_ENABLE_OTA
-    xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
-    configASSERT( xResult == pdTRUE );
-#endif
 
     xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 4096, NULL, 5, NULL );
     configASSERT( xResult == pdTRUE );

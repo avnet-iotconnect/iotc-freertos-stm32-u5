@@ -55,12 +55,6 @@ void iotc_ota_fw_download(const char* host, const char* path) {
         return;
     }
 
-    //PkiObject_t ca_certificates[] = { PKI_OBJ_PEM((const unsigned char *)GODADDY_ROOT_CERTIFICATE_AUTHORITY_G2, sizeof(GODADDY_ROOT_CERTIFICATE_AUTHORITY_G2)) };
-    //PkiObject_t ca_certificates[] = {PKI_OBJ_PEM((const unsigned char *)IOTCONNECT_BALTIMORE_CYBER_TRUST_ROOT, sizeof(IOTCONNECT_BALTIMORE_CYBER_TRUST_ROOT))};
-
-    // use the same TLS cert as the MQTT connection cert for S3
-    //PkiObject_t ca_certificates[] = {xPkiObjectFromLabel( TLS_ROOT_CA_CERT_LABEL)};
-
 	PkiObject_t ca_certificates[] = {PKI_OBJ_PEM((const unsigned char *)STARFIELD_ROOT_CA_G2, sizeof(STARFIELD_ROOT_CA_G2))};
 
     /* ALPN protocols must be a NULL-terminated list of strings. */

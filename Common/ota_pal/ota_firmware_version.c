@@ -25,7 +25,7 @@
  * OTA update.
  */
 
-#include "ota_appversion32.h"
+//#include "ota_appversion32.h"
 
 /**
  *  @brief The version for the firmware which is running. OTA agent uses this
@@ -41,9 +41,11 @@
 /**
  * @brief Structure used for encoding firmware version.
  */
+/*
 const AppVersion32_t appFirmwareVersion =
     {
         .u.x.major = APP_VERSION_MAJOR,
         .u.x.minor = APP_VERSION_MINOR,
         .u.x.build = APP_VERSION_BUILD,
 };
+*/

@@ -23,7 +23,7 @@
 #include "mbedtls_transport.h"
 
 #include "sys_evt.h"
-#include "ota.h"
+#include "new_ota.h"
 
 /* MQTT library includes. */
 #include "core_mqtt.h"
@@ -50,7 +50,7 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"01.24.23"		// Version string
+#define APP_VERSION 			"02.24.07"		// Version string
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
@@ -142,21 +142,6 @@ void iotconnect_app( void * )
 
     awsrtos_config.host = mqtt_endpoint_url;
 	iotconnect_sdk_init(&awsrtos_config);
-#endif
-
-#ifdef IOTCONFIG_ENABLE_OTA
-		while (!is_ota_agent_file_initialized()) {
-			LogInfo("Waiting for OTA agent (state=%d)...", OTA_GetState());
-			vTaskDelay(pdMS_TO_TICKS(2000));
-		}
-		switch (OTA_SetImageState(OtaImageStateAccepted)) {
-			case OtaErrNone:
-			case OtaErrNoActiveJob:
-				// these should be ok
-				break;
-			default:
-				LogError("ERROR: Failed to OTA_SetImageState. This image may reboot in failed state");
-		}
 #endif
 
     while (1) {
@@ -312,8 +297,7 @@ static void on_ota(IotclEventData data) {
     char *url = iotcl_clone_download_url(data, 0);
     bool success = false;
 
-    LogInfo("\n\non_ota\n\n");
-
+    LogInfo("\n\nOTA command received\n");
 
     if (NULL != url) {
     	LogInfo("Download URL is: %s\r\n", url);
@@ -366,26 +350,11 @@ static void on_ota(IotclEventData data) {
 }
 
 
-static bool is_ota_agent_file_initialized(void)
-{
-	// not really sure what state we should be looking for, but these should work:
-	switch(OTA_GetState()) {
-		case OtaAgentStateWaitingForJob:
-		case OtaAgentStateNoTransition:
-		case OtaAgentStateReady:
-		case OtaAgentStateSuspended:
-			return true;
-		default:
-		{
-			LogInfo ("OTA agegent file not initialized: state:$d", OTA_GetState());
-			return false;
-		}
-	}
-}
-
-
-// Parses the URL into host and resource strings which will be malloced
-// Ensure to free the two pointers on success
+/* @brief	Parse the OTA download URL into host and resource strings
+ *
+ * Note: The host and resource strings will be malloced, ensure to
+ * free the two pointers on success
+ */
 static int split_url(const char *url, char **host_name, char**resource) {
     size_t host_name_start = 0;
     size_t url_len = strlen(url);
