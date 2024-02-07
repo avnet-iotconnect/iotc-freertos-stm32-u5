@@ -97,7 +97,7 @@ void iotconnect_sdk_poll(int wait_time_ms);
 
 void iotconnect_sdk_disconnect();
 
-extern void iotc_ota_fw_download(const char* host, const char* path);
+void iotc_ota_fw_download(const char* host, const char* path);
 
 
 #ifdef __cplusplus

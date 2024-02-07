@@ -23,7 +23,7 @@
 #include "mbedtls_transport.h"
 
 #include "sys_evt.h"
-#include "new_ota.h"
+#include "ota_pal.h"
 
 /* MQTT library includes. */
 #include "core_mqtt.h"

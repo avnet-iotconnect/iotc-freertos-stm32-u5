@@ -34,7 +34,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "new_ota.h"
 #include "ota_pal.h"
 #include "stm32u5xx.h"
 #include "stm32u5xx_hal_flash.h"
@@ -961,6 +960,24 @@ void otaPal_EarlyInit( void )
         LogSys( "OTA EarlyInit: Ending State: %s.", pcPalStateToString( pxCtx->xPalState ) );
     }
 }
+
+
+/*
+ * @brief	Accept a new firmware image as valid and working
+ */
+void otaPal_AcceptImage(void)
+{
+	otaPal_SetPlatformImageState(NULL, OtaImageStateAccepted);
+}
+
+/*
+ * @brief	Reject a new firmware iamge and roll back to previous image
+ */
+void otaPal_RejectImage(void)
+{
+	otaPal_SetPlatformImageState(NULL, OtaImageStateRejected);
+}
+
 
 OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileContext,
                                              OtaImageState_t xDesiredState )

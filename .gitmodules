@@ -10,10 +10,6 @@
 	path = Middleware/FreeRTOS/coreMQTT-Agent
 	url = https://github.com/FreeRTOS/coreMQTT-Agent.git
 	fetchRecurseSubmodules = false
-[submodule "Middleware/FreeRTOS/coreJSON"]
-	path = Middleware/FreeRTOS/coreJSON
-	url = https://github.com/FreeRTOS/coreJSON.git
-	fetchRecurseSubmodules = false
 [submodule "Middleware/FreeRTOS/coreHTTP"]
 	path = Middleware/FreeRTOS/coreHTTP
 	url = https://github.com/FreeRTOS/coreHTTP.git
@@ -30,17 +26,9 @@
 	path = Middleware/FreeRTOS/FreeRTOS-Libraries-Integration-Tests
 	url = https://github.com/FreeRTOS/FreeRTOS-Libraries-Integration-Tests.git
 	fetchRecurseSubmodules = false
-[submodule "Middleware/AWS/IoTJobs"]
-	path = Middleware/AWS/IoTJobs
-	url = https://github.com/aws/Jobs-for-AWS-IoT-embedded-sdk.git
-	fetchRecurseSubmodules = false
 [submodule "Middleware/ARM/mbedtls"]
 	path = Middleware/ARM/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
-	fetchRecurseSubmodules = false
-[submodule "Middleware/ARM/trusted-firmware-m"]
-	path = Middleware/ARM/trusted-firmware-m
-	url = https://github.com/paulbartell/tfm-staging.git
 	fetchRecurseSubmodules = false
 [submodule "Drivers/CMSIS/Device/ST/STM32U5xx"]
 	path = Drivers/CMSIS/Device/ST/STM32U5xx
@@ -51,18 +39,12 @@
 [submodule "Middleware/ARM/littlefs"]
 	path = Middleware/ARM/littlefs
 	url = https://github.com/littlefs-project/littlefs.git
-[submodule "Middleware/ARM/mcuboot"]
-	path = Middleware/ARM/mcuboot
-	url = https://github.com/mcu-tools/mcuboot.git
 [submodule "Middleware/tinycbor"]
 	path = Middleware/tinycbor
 	url = https://github.com/intel/tinycbor.git
 [submodule "Drivers/STM32U5xx_HAL"]
 	path = Drivers/STM32U5xx_HAL
 	url = https://github.com/STMicroelectronics/stm32u5xx_hal_driver.git
-[submodule "Middleware/http-parser"]
-	path = Middleware/http-parser
-	url = https://github.com/nodejs/http-parser.git
 [submodule "Drivers/BSP/B-U585I-IOT02A"]
 	path = Drivers/BSP/B-U585I-IOT02A
 	url = https://github.com/STMicroelectronics/b-u585i-iot02a-bsp.git

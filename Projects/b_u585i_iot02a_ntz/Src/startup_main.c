@@ -45,7 +45,7 @@
 #include "cli/cli.h"
 #include "awsrtos_time.h"
 #include "config/iotconnect_config.h"
-#include "new_ota.h"
+#include "ota_pal.h"
 
 /*	Number of polls and interval between polls to check if sntp time has synced */
 #define SNTP_SYNC_POLL_MAX 10
@@ -221,9 +221,9 @@ void vInitTask( void * pvArgs )
          */
 
         if (1) {
-        	otaPal_SetPlatformImageState(NULL, OtaImageStateAccepted);
+        	otaPal_AcceptImage();
         } else {
-        	otaPal_SetPlatformImageState(NULL, OtaImageStateRejected);
+        	otaPal_RejectImage();
         }
 #endif
 
