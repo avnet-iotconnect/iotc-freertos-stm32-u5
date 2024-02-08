@@ -388,38 +388,3 @@ static bool is_mqtt_connected(void)
 
 	return ((uxEvents & EVT_MASK_MQTT_CONNECTED) == EVT_MASK_MQTT_CONNECTED);
 }
-
-void vIOTC_Ota_Handler(void *parameters) {
-    (void) parameters;
-
-    LogInfo("vIOTC_Ota_Handler (initial wait)");
-    vTaskDelay( 15000 );
-#if 0
-    while (!is_mqtt_connected()) {
-        vTaskDelay( 1000 );
-    }
-    subscribe_to_c2d_topic();
-#endif
-
-    // TODO: I assume we get the host and path from an OTA message.
-
-#if 0
-			/* Write to */
-			bytesWritten = snprintf(payloadBuf, (size_t)MQTT_PUBLISH_MAX_LEN,
-					"{\"d\":[{\"d\":{\"version\":\"MLDEMO-1.0\",\"class\":\"%s\"}}],\"mt\":0,\"cd\":\"XG4E2EW\"}",
-					sAiClassLabels[max_idx]);
-#endif
-    // http_download_fw("saleshosted.z13.web.core.windows.net", "/demo/st/b_u585i_iot02a_ntz-orig.bin");
-//    https_download_fw("iotc-260030673750.s3.amazonaws.com", "/584af730-2854-4a77-8f3b-ca1696401e08/firmware/9db499d2-7f9a-47ac-a0ca-c46a94f58161/2a4dd76c-09d6-4c7a-99cc-24478443e758.iso?AWSAccessKeyId=ASIATZCYJGNLFRTG3N5Z&Expires=1699122284&x-amz-security-token=IQoJb3JpZ2luX2VjEBMaCXVzLWVhc3QtMSJIMEYCIQD5o%2B51dIMReUYskkSs4VCz%2F0TEyqgzNvGR1IVU%2F%2FPYwQIhAKUuTmeUfP3hmF3d4mCaektX3JZsn5FX1Z%2B7K0f%2BlnGyKugCCEwQABoMMjYwMDMwNjczNzUwIgzLg9HIaVgG77SpDJAqxQIX8kwAsgRKSaHKGv2Ha5yQYuz5ad8itdfbaCtObAkt3YvM5u9hSXClO5el3E8CX88zHVp%2BJTOkUnubh4Jg614ircETeTocxQb4yC%2Bx6Smb%2FCWzYynF6ImE0e6uMkZex6DdPUVTYCz7aIwCtdxvFFDHEIBixdnEBAFX%2BBaJQ8cNXlbDiwX%2FoZpixDPbNpOsxiOuGfHd%2BT3di%2FSdUJkpinRV3KSXBNiWcsgwnD7hWRYpKAukHh99DFw0JwzR6dUaGbGWEs9K0x%2BQHjSlkoVbRh1plaWieWL9oQA3FLUc5Q8GkVEGlCXPrP20bG8pdTQDNEmcr2fW4aw17ekCEPCicS%2BeO0sZNpxlQO1vIXchH1NV%2B7E2Xv8pgCYS4bCJKMxID9oQiK317m0qQBdA41gii%2BCQTmRemkcWcXWbRYJcKzdufNhaRZ07MM70lKoGOp0BqJLymPpLpecIC0ZktF1Wsff8ThaXX0xKVc2iislODQ9I2wEPS6LoEM72EVjvgAkG3ThR57GETt7efiOfVyjVofXIErw8st8TbyM4y1HBRNFrI7%2FkRT6ntLjGnlA%2FXG08hjvMiSPQpuKnsEfJAkrTLAh9SuE4Km8o7vN01FvJHlAmkO6T5CmG%2B9DVZX4su%2F%2BIZ1nNG15%2F3IeIgx%2FHJg%3D%3D&Signature=BsHL4UPS3o91MP4WF38OWFA1mSE%3D");
-
-	LogInfo("vIOTC_Ota_Handler - mock download done");
-
-	// TODO:  How do we force a reset and the firmware to be updated?
-	// TODO: What copies it from filesystem /ota folder to internal flash?
-	// Is there a bootloader that selects A or B images ?
-
-    while (true) {
-    	vTaskDelay(10000);
-    }
-}
-
