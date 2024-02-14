@@ -258,7 +258,7 @@ int16_t otaPal_WriteBlock( OtaFileContext_t * const pFileContext,
  *   OtaPalSuccess on success.
  *   OtaPalActivateFailed: The activation of the new OTA image failed.
  */
-OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const pFileContext );
+OtaPalStatus_t otaPal_ActivateNewImage(void);
 
 /**
  * @brief Attempt to set the state of the OTA update image.
@@ -298,7 +298,7 @@ OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pFileConte
  *         the MCU specific sub error code. See ota_platform_interface.h for the OtaPalMainStatus_t
  *         error codes and your specific PAL implementation for the sub error code.
  */
-OtaPalStatus_t otaPal_ResetDevice( OtaFileContext_t * const pFileContext );
+OtaPalStatus_t otaPal_ResetDevice(void);
 
 
 /*

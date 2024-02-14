@@ -896,7 +896,7 @@ OtaPalStatus_t otaPal_CloseFile( OtaFileContext_t * const pxFileContext )
     return uxOtaStatus;
 }
 
-OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const pxFileContext )
+OtaPalStatus_t otaPal_ActivateNewImage(void)
 {
     OtaPalStatus_t uxOtaStatus = OTA_PAL_COMBINE_ERR( OtaPalActivateFailed, 0 );
 
@@ -910,7 +910,7 @@ OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const pxFileContext )
         pxContext->ulPendingBank = pxContext->ulTargetBank;
 
         pxContext->xPalState = OTA_PAL_PENDING_SELF_TEST;
-        uxOtaStatus = otaPal_ResetDevice( pxFileContext );
+        uxOtaStatus = otaPal_ResetDevice();
     }
 
     return uxOtaStatus;
@@ -943,7 +943,7 @@ void otaPal_EarlyInit( void )
                 ( void ) prvWritePalNvContext( pxCtx );
 
                 LogError( "Detected a watchdog reset during first boot of new image. Reverting to bank: %d", ulGetOtherBank( pxCtx->ulTargetBank ) );
-                ( void ) otaPal_ResetDevice( NULL );
+                ( void ) otaPal_ResetDevice();
                 break;
 
             case OTA_PAL_NEW_IMAGE_WDT_RESET:
@@ -1033,7 +1033,7 @@ OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileCont
                     case OTA_PAL_NEW_IMAGE_BOOTED:
                         pxContext->xPalState = OTA_PAL_SELF_TEST_FAILED;
                         pxContext->ulPendingBank = ulGetOtherBank( pxContext->ulTargetBank );
-                        uxOtaStatus = otaPal_ResetDevice( pxFileContext );
+                        uxOtaStatus = otaPal_ResetDevice();
                         break;
 
                     case OTA_PAL_SELF_TEST_FAILED:
@@ -1156,11 +1156,9 @@ OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileCont
 
 
 
-OtaPalStatus_t otaPal_ResetDevice( OtaFileContext_t * const pxFileContext )
+OtaPalStatus_t otaPal_ResetDevice(void)
 {
     OtaPalStatus_t uxStatus = OTA_PAL_COMBINE_ERR( OtaPalSuccess, 0 );
-
-    ( void ) pxFileContext;
     OtaPalContext_t * pxContext = prvGetImageContext();
 
     LogSys( "OTA PAL reset request received. xPalState: %s", pcPalStateToString( pxContext->xPalState ) );

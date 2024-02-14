@@ -50,7 +50,7 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"02.24.07"		// Version string
+#define APP_VERSION 			"02.24.14"		// Version string
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
@@ -296,6 +296,7 @@ static void on_ota(IotclEventData data) {
     const char *message = NULL;
     char *url = iotcl_clone_download_url(data, 0);
     bool success = false;
+    int needs_ota_commit = false;
 
     LogInfo("\n\nOTA command received\n");
 
@@ -321,10 +322,14 @@ static void on_ota(IotclEventData data) {
             }
 
             is_downloading = true;
-            start_ota(url);
+
+            if (start_ota(url) == 0) {
+                needs_ota_commit = true;
+                success = true;
+            }
+
             is_downloading = false; // we should reset soon
         }
-
 
         free((void*) url);
         free((void*) version);
@@ -339,6 +344,8 @@ static void on_ota(IotclEventData data) {
             free((void*) command);
         }
     }
+
+
     const char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
     if (NULL != ack) {
     	LogInfo("Sent OTA ack: %s", ack);
@@ -347,6 +354,14 @@ static void on_ota(IotclEventData data) {
     }
 
     LogInfo("on_ota done");
+
+    if (needs_ota_commit) {
+    	// 5 second Delay to allow OTA ack to be sent
+    	LogInfo("wait 5 seconds to commit OTA");
+    	vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+    	LogInfo("committing OTA...");
+    	iotc_ota_fw_apply();
+    }
 }
 
 
@@ -401,16 +416,17 @@ static int start_ota(char *url)
 {
     char *host_name;
     char *resource;
+    int status;
 
     LogInfo ("start_ota: %s", url);
 
-    int status = split_url(url, &host_name, &resource);
+    status = split_url(url, &host_name, &resource);
     if (status) {
         LogError("start_ota: Error while splitting the URL, code: 0x%x", status);
         return status;
     }
 
-    iotc_ota_fw_download(host_name, resource);
+    status = iotc_ota_fw_download(host_name, resource);
 
     free(host_name);
     free(resource);

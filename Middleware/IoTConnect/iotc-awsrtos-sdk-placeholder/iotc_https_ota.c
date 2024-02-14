@@ -43,7 +43,7 @@ static void setup_request(HTTPRequestInfo_t* request, const char* method, const 
     request->reqFlags = HTTP_REQUEST_KEEP_ALIVE_FLAG;
 }
 
-void iotc_ota_fw_download(const char* host, const char* path) {
+int iotc_ota_fw_download(const char* host, const char* path) {
 	TlsTransportStatus_t tls_transport_status;
 	HTTPStatus_t http_status;
 	OtaPalStatus_t pal_status;
@@ -52,7 +52,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
     NetworkContext_t* network_conext = mbedtls_transport_allocate();
     if (NULL == network_conext) {
         LogError("Failed to allocate network context!");
-        return;
+        return -1;
     }
 
 	PkiObject_t ca_certificates[] = {PKI_OBJ_PEM((const unsigned char *)STARFIELD_ROOT_CA_G2, sizeof(STARFIELD_ROOT_CA_G2))};
@@ -68,7 +68,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
     );
     if( TLS_TRANSPORT_SUCCESS != tls_transport_status) {
         LogError("Failed to configure mbedtls transport! Error: %d", tls_transport_status);
-        return;
+        return -1;
     }
 
     tls_transport_status = mbedtls_transport_connect(
@@ -80,7 +80,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
     );
     if (TLS_TRANSPORT_SUCCESS != tls_transport_status) {
         LogError("HTTPS: Failed to connect! Error: %d", tls_transport_status);
-        return;
+        return -1;
     }
 
     TransportInterface_t transport_if = {0};
@@ -105,13 +105,13 @@ void iotc_ota_fw_download(const char* host, const char* path) {
     http_status = HTTPClient_InitializeRequestHeaders( &headers, &request);
 	if (0 != http_status) {
     	LogError("HTTP failed to initialize headers! Error: %s", HTTPClient_strerror(http_status));
-    	return;
+    	return -1;
 	}
 
 	http_status = HTTPClient_AddRangeHeader(&headers, 0, 0);
 	if (0 != http_status) {
 		LogError("HTTP failed to add initial range header for size query! Error: %s", HTTPClient_strerror(http_status));
-		return;
+		return -1;
 	}
 
 	http_status = HTTPClient_Send(
@@ -147,14 +147,14 @@ void iotc_ota_fw_download(const char* host, const char* path) {
 
 	if (NULL == data_length_str || 0 == data_length_str_len) {
 		LogInfo("Could not obtain data length!");
-		return;
+		return -1;
 	}
 
 	LogInfo("Response range reported: %.*s", data_length_str_len, data_length_str);
 
 	if (data_length_str_len > DATA_BYTE_SIZE_CHAR_MAX) {
 		LogInfo("Unsupported data length: %lu", data_length_str_len);
-		return;
+		return -1;
 	}
 
 	//LogInfo("Response body: %.*s", response.bodyLen, response.pBody);
@@ -164,7 +164,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
 	strncpy(data_length_buffer, data_length_str, data_length_str_len);
 	if (1 != sscanf(data_length_buffer, S3_RANGE_RESPONSE_PREFIX"%d", &data_length)) {
 		LogInfo("Could not convert data length to number");
-		return;
+		return -1;
 	}
 
 	LogInfo("Response data length (number) is %d", data_length);
@@ -197,12 +197,12 @@ void iotc_ota_fw_download(const char* host, const char* path) {
 	    http_status = HTTPClient_InitializeRequestHeaders(&headers, &request);
 		if (HTTPSuccess != http_status) {
 	    	LogError("HTTP failed to initialize headers! Error: %s", HTTPClient_strerror(http_status));
-	    	return;
+	    	return -1;
 		}
 		http_status = HTTPClient_AddRangeHeader(&headers, data_start, data_end - 1);
 		if (HTTPSuccess != http_status) {
 			LogError("HTTP failed to add range header! Error: %s", HTTPClient_strerror(http_status));
-			return;
+			return -1;
 		}
 
 		int tries_remaining = 30;
@@ -221,7 +221,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
             if (0 != data_start && HTTPNetworkError == http_status) {
                 if (0 == tries_remaining) {
                     LogError("HTTP range %d-%d send error: %s", data_start, data_end - 1, HTTPClient_strerror(http_status));
-                    return;
+                    return -1;
                 }
                 LogError("Failed to get chunk range %d-%d. Reconnecting...", data_start, data_end - 1);
                 vTaskDelay( 1000 );
@@ -236,7 +236,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
                 tries_remaining--;
             } else if (HTTPSuccess != http_status) {
                 LogError("HTTP range %d-%d send error: %s", data_start, data_end - 1, HTTPClient_strerror(http_status));
-                return;
+                return -1;
             }
         } while (http_status == HTTPNetworkError);
 
@@ -256,7 +256,7 @@ void iotc_ota_fw_download(const char* host, const char* path) {
 	    );
 	    if (bytes_written != (int16_t) response.bodyLen) {
 	    	LogError("Expected to write %d bytes, but wrote %u!", response.bodyLen, bytes_written);
-	    	return;
+	    	return -1;
 	    }
 	}
     mbedtls_transport_disconnect(network_conext);
@@ -271,13 +271,25 @@ void iotc_ota_fw_download(const char* host, const char* path) {
 
     vTaskDelay(100);
 
-	pal_status = otaPal_ActivateNewImage(&file_context);
+    return 0;
+}
+
+/*
+ *
+ */
+int iotc_ota_fw_apply(void) {
+	OtaPalStatus_t pal_status;
+
+    printf("OTA: Applying firmware. Resetting the board.\r\n");
+
+	pal_status = otaPal_ActivateNewImage();
 	if (OtaPalSuccess != pal_status) {
 		LogError("OTA failed activate the downloaded firmware. Error: 0x%x", pal_status);
 	}
     vTaskDelay(100);
-
 }
+
+
 
 #include "sys_evt.h"
 #include "core_mqtt_agent.h"
