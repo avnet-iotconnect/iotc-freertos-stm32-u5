@@ -28,6 +28,9 @@ On Linux this device may appear as /dev/ttyACM0 or /dev/ttyACM1.
 You will now have access to the command line interface to the device,
 enter the command "help" to check that the serial port is functioning.
 
+### MiniCOM Configuration
+1. `ls /dev/ttyACM*` to find the tty interface
+2. `minicom -D /dev/ttyACM0` or otherwise numbered interface
 
 ## Cloud Account Setup
 
@@ -49,8 +52,8 @@ Extract the archive containing the firmware images from files.witekio.com, the
 images are in several formats.
 
 In STM32CubeProgrammer click the Open File tab or "+" tab at the top of the
-window.  In the open file dialog select either of the b_u585i_iot02a_ntz.elf or
-b_u585i_io02a_ntz.hex files and click "Open" to load the file.
+window.  In the open file dialog select either of the `b_u585i_iot02a_ntz.elf` or
+`b_u585i_io02a_ntz.hex` files and click "Open" to load the file.
 
 Towards the top-right of the STM32CubeProgrammer window is a blue "Download" button,
 click on this to download the image to the developer kit board.  The red LED
@@ -61,7 +64,7 @@ the top-right corner of STM32CubeProgrammer.
 
 Press the black reset button next to the blue button to reset the board.
 
-
+### Board Variable Configuration
 #### Thing Name
 
 First, configure the desired thing name / mqtt device identifier:
@@ -73,8 +76,9 @@ thing_name="device_name"
 
 #### IoT-Connect CPID and Env
 
-Next, set the IoT-Connect "cpid" and "env" variables.  These can be found on the IoT-Connect web
-dashboard under Settings - Key Vault.
+Next, set the IoT-Connect "cpid" and "env" variables.  These can be found on the IoT-Connect web dashboard under Settings - Key Vault.
+
+https://awspoc.iotconnect.io/key-vault
 
 ```
 > conf set cpid cpid_string
@@ -111,10 +115,10 @@ Commit the staged configuration changes to non-volatile memory.
 Configuration saved to NVM.
 ```
 
-
+### Importing CA keys
 #### Import the Amazon Root CA Certificate
 
-Use the *pki import cert root_ca_cert* command to import the Amazon Root CA Certificate.
+Use the `pki import cert root_ca_cert` command to import the Amazon Root CA Certificate.
 
 For this demo, we recommend you use the ["Starfield Services Root Certificate Authority - G2](https://www.amazontrust.com/repository/SFSRootCAG2.pem) Root CA Certificate which has signed all four available Amazon Trust Services Root CA certificates.
 
@@ -188,7 +192,7 @@ LPAvTK33sefOT6jEm0pUBsV/fdUID+Ic/n4XuKxe9tQWskMJDE32p2u0mYRlynqI
 -----END CERTIFICATE-----
 ```
 
-
+### Generating Device Keys
 #### Generate a private key
 Use the *pki generate key* command to generate a new ECDSA device key pair. The resulting
 public key will be printed to the console.
@@ -204,6 +208,8 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=
 -----END PUBLIC KEY-----
 ```
+
+Save this to a file named: `THING_NAME.pub`
 
 
 #### Generate a self-signed certificate
@@ -227,18 +233,18 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==
 ```
 
 Save the resulting certificate to a new file, including the  BEGIN CERTIFICATE and END CERTIFICATE lines.
-Name the file as devicecert.pem.
-
+Save this to a file name `THING_NAME.pem`
 
 
 ### Register the device with IoTConnect-AWS
 
-1. Upload the certificate that you saved from the terminal, devicecert.pem at https://awspoc.iotconnect.io/certificate (CA Certificate Individual)
-2. Create a template using **CA certificate Individual** as "Auth Type".
-3. Create a device and select the certicate that you uploaded in "Certificate Authority" and upload the same certificate again in "Device Certificate".
+#### 1. Creating a Device Template
+This will specify the telemetry attributes and commands issuable to the IoT device.
 
-
-In the template add attributes for the following, setting their types as integers:
+1. Goto https://awspoc.iotconnect.io/template/1/add
+2. Input the template name and the template code.
+3. Click `Save`, this will send you to a further configuration page.
+4. Input the following attributes:
 
 | Name              | Type      |
 |-------------------|-----------|
@@ -249,15 +255,30 @@ In the template add attributes for the following, setting their types as integer
 | gyro_y            | Integer   |
 | gyro_z            | Integer   |
 
-
-In the template add the following commands that the device supports:
+5. Input the following Commands
 
 | Command           | Command-Name | Parameter Required | Receipt Required | OTA   |
 --------------------|--------------|--------------------|------------------|-------|
 | led-green         | led-green    | No                 | No               | No    |
 | led-red           | led-red      | No                 | No               | No    |
 
+#### 2. Registering a CA Cert
+This will be the root CA signing key used on device.
 
+1. Goto https://awspoc.iotconnect.io/certificate/add
+2. Input the name of the CA cert you wish to register. This can be `THING_NAME-cert` for easier tracking with individual devices or `SFSRootCAG2-cert` for easier tracking of the CA.
+3. Set `Certificate Type` as `CA Signed Certificate (Individual)`.
+4. Upload the certificate used when creating your device, such as `SFSRootCAG2.pem`. **THIS IS NOT** `THING_NAME.pem`.
+5. Click `Save` and verify the cert has been created by checking https://awspoc.iotconnect.io/certificate
+
+#### 3. Registering a new Device
+This will register a new device with an existing template and CA cert.
+
+1. Goto https://awspoc.iotconnect.io/device/1/add
+2. Enter the `Unique ID` and `Display Name`, it is advised to keep them the same unless you have a specific reason otherwise.
+3. Select your `Entity`, this will usually be the company/project.
+4. Select a template for your device, such as the one created in step 1.
+5. Click `Save & View`
 
 ### Reset the target device
 
