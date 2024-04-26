@@ -47,6 +47,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>iotc-freertos-sdk</name>
+			<type>2</type>
+			<location>/home/mgilhespie/projects/iotconnect/new/iotc-freertos-stm32-u5/my-middlewares</location>
+		</link>
+		<link>
 			<name>Libraries/.git</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Middleware/FreeRTOS/coreHTTP/.git</locationURI>
