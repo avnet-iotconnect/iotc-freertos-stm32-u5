@@ -205,13 +205,13 @@ static char *create_telemetry_json(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axe
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
     iotcl_telemetry_add_with_iso_time(msg, NULL);
 
-    iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.x);
-    iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.y);
-    iotcl_telemetry_set_number(msg, "gyro_z", gyro_data.z);
+	iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.xval);
+	iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.yval);
+	iotcl_telemetry_set_number(msg, "gyro_z", gyro_data.zval);
 
-    iotcl_telemetry_set_number(msg, "accelerometer_x", accel_data.x);
-    iotcl_telemetry_set_number(msg, "accelerometer_y", accel_data.y);
-    iotcl_telemetry_set_number(msg, "accelerometer_z", accel_data.z);
+	iotcl_telemetry_set_number(msg, "accelerometer_x", accel_data.xval);
+	iotcl_telemetry_set_number(msg, "accelerometer_y", accel_data.yval);
+	iotcl_telemetry_set_number(msg, "accelerometer_z", accel_data.zval);
 
 #if 0
     iotcl_telemetry_set_number(msg, "magnetometer_x", mag_data.x);

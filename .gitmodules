@@ -1,14 +1,14 @@
 [submodule "iotc-freertos-sdk"]
 	path = iotc-freertos-sdk
-	url = https://github.com/avnet-iotconnect/iotc-freertos.git
+	url = git@github.com:avnet-iotconnect/iotc-freertos.git
 	fetchRecurseSubmodules = false
 [submodule "Middleware/FreeRTOS/kernel"]
 	path = Middleware/FreeRTOS/kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
 	fetchRecurseSubmodules = false
 [submodule "Middleware/FreeRTOS/backoffAlgorithm"]
-    path = Middleware/FreeRTOS/backoffAlgorithm
-    url = https://github.com/FreeRTOS/backoffAlgorithm.git
+	path = Middleware/FreeRTOS/backoffAlgorithm
+	url = https://github.com/FreeRTOS/backoffAlgorithm.git
 [submodule "Drivers/CMSIS/Device/ST/STM32U5xx"]
 	path = Drivers/CMSIS/Device/ST/STM32U5xx
 	url = https://github.com/STMicroelectronics/cmsis_device_u5.git
