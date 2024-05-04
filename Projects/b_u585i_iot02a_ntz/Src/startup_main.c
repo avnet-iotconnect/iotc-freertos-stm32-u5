@@ -43,7 +43,7 @@
 #include "stm32u5xx_ll_rng.h"
 #include "test_execution_config.h"
 #include "cli/cli.h"
-#include "awsrtos_time.h"
+#include "iotc_sntp_time.h"
 #include "config/iotconnect_config.h"
 #include "ota_pal.h"
 
