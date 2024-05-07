@@ -687,10 +687,7 @@ static void prvIncomingPublishCallback( MQTTAgentContext_t * pMqttAgentContext,
 {
     SubMgrCtx_t * pxCtx = NULL;
     bool xPublishHandled = false;
-
     ( void ) packetId;
-
-    LogInfo("prvIncomingPublishCallback");
 
     configASSERT( pMqttAgentContext );
     configASSERT( pMqttAgentContext->pIncomingCallbackContext );
@@ -718,7 +715,7 @@ static void prvIncomingPublishCallback( MQTTAgentContext_t * pMqttAgentContext,
                     pcTaskName = "Unknown";
                 }
 
-                LogInfo( "Handling callback for task=%s, topic=\"%.*s\", filter=\"%.*s\".",
+				LogDebug( "Handling callback for task=%s, topic=\"%.*s\", filter=\"%.*s\".",
                          pcTaskName,
                          pxPublishInfo->topicNameLength, pxPublishInfo->pTopicName,
                          pxSubInfo->topicFilterLength, pxSubInfo->pTopicFilter );

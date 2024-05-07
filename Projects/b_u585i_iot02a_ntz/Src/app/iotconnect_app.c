@@ -144,6 +144,9 @@ void iotconnect_app( void * )
 	iotconnect_sdk_init(&awsrtos_config);
 #endif
 
+	LogInfo("Sending telemetry\r\n");
+	vTaskDelay(2000);
+
     while (1) {
         /* Interpret sensor data */
         int32_t sensor_error = BSP_ERROR_NONE;
@@ -154,18 +157,19 @@ void iotconnect_app( void * )
         sensor_error |= BSP_MOTION_SENSOR_GetAxes( 1, MOTION_MAGNETO, &xMagnetoAxes );
 
         if (sensor_error == BSP_ERROR_NONE) {
-            IotclMessageHandle message = iotcl_telemetry_create();
+			IotclMessageHandle message = iotcl_telemetry_create();
             char* json_message = create_telemetry_json(message, xAcceleroAxes, xGyroAxes, xMagnetoAxes);
 
             if (json_message == NULL) {
-            	LogError("Could not create telemetry data\n");
+				LogError("Could not create telemetry data\r\n");
                 vTaskDelete( NULL );
             }
 
-            LogDebug("Telemetry: %s\n", json_message);
+			LogDebug("Telemetry: %s\r\n", json_message);
 
 			iotconnect_sdk_send_packet(json_message);  // underlying code will report an error
 			iotcl_destroy_serialized(json_message);
+			iotcl_telemetry_destroy(message);
         }
 
         vTaskDelay( pdMS_TO_TICKS( MQTT_PUBLISH_PERIOD_MS ) );
