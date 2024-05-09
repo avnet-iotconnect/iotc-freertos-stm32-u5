@@ -65,6 +65,7 @@
 #include "sys_evt.h"
 
 #include "iotconnect.h"
+#include "iotc_mqtt_client.h"
 
 /*-----------------------------------------------------------*/
 
@@ -171,8 +172,6 @@ static struct IOTCMQTTConfig {
 	const char *host;
 	int port;
 	char *duid;
-	const char *sub_topic;
-	const char *pub_topic;
 	PkiObject_t root_ca_cert;
 	PkiObject_t client_certificate;
 	PkiObject_t private_key;
@@ -687,7 +686,10 @@ static void prvIncomingPublishCallback( MQTTAgentContext_t * pMqttAgentContext,
 {
     SubMgrCtx_t * pxCtx = NULL;
     bool xPublishHandled = false;
+
     ( void ) packetId;
+
+    LogInfo("prvIncomingPublishCallback");
 
     configASSERT( pMqttAgentContext );
     configASSERT( pMqttAgentContext->pIncomingCallbackContext );
@@ -715,7 +717,7 @@ static void prvIncomingPublishCallback( MQTTAgentContext_t * pMqttAgentContext,
                     pcTaskName = "Unknown";
                 }
 
-				LogDebug( "Handling callback for task=%s, topic=\"%.*s\", filter=\"%.*s\".",
+                LogInfo( "Handling callback for task=%s, topic=\"%.*s\", filter=\"%.*s\".",
                          pcTaskName,
                          pxPublishInfo->topicNameLength, pxPublishInfo->pTopicName,
                          pxSubInfo->topicFilterLength, pxSubInfo->pTopicFilter );
@@ -973,38 +975,23 @@ MQTTAgentHandle_t xGetMqttAgentHandle( void )
 }
 
 
-/* @brief	Set configuration parameters of MQTT client
- *
- */
-
-MQTTStatus_t vSetMQTTConfig( const char *host,
-						  int port,
-						  const char *duid,
-						  const char *sub_topic,
-						  const char *pub_topic,
-						  PkiObject_t root_ca_cert,
-						  PkiObject_t device_cert,
-						  PkiObject_t device_key)
-{
-	mqtt_config.host = host;
-	mqtt_config.port = port;
-	mqtt_config.duid = duid;
-	mqtt_config.sub_topic = sub_topic;
-	mqtt_config.pub_topic = pub_topic;
-	mqtt_config.root_ca_cert = root_ca_cert;
-	mqtt_config.client_certificate = device_cert;
-	mqtt_config.private_key = device_key;
-	return MQTTSuccess;
-}
-
-
 /*-----------------------------------------------------------*/
 
 extern void vLogCertInfo( mbedtls_x509_crt * pxCert, const char * pcMessage );
 
-void vMQTTAgentTask( void * pvParameters )
+#define MQTTS_PORT		8883
+
+void vMQTTAgentTask(void *arg)
 {
-    ( void ) pvParameters;
+	IotConnectDeviceClientConfig *client_config = arg;
+
+	mqtt_config.host = client_config->host;
+	mqtt_config.port = MQTTS_PORT;
+	mqtt_config.duid = client_config->duid;
+	mqtt_config.root_ca_cert = client_config->auth->mqtt_root_ca;
+	mqtt_config.client_certificate =
+			client_config->auth->data.cert_info.device_cert;
+	mqtt_config.private_key = client_config->auth->data.cert_info.device_key;
 
 	MQTTStatus_t xMQTTStatus = MQTTSuccess;
     TlsTransportStatus_t xTlsStatus = TLS_TRANSPORT_CONNECT_FAILURE;

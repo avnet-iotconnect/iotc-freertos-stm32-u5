@@ -40,9 +40,14 @@
 
 //Iotconnect
 #include "iotconnect.h"
-#include "iotconnect_lib.h"
-#include "iotconnect_telemetry.h"
-#include "iotconnect_event.h"
+#include "iotcl.h"
+#include "iotcl_c2d.h"
+#include "iotcl_certs.h"
+#include "iotcl_cfg.h"
+#include "iotcl_log.h"
+#include "iotcl_telemetry.h"
+#include "iotcl_util.h"
+
 #include <config/iotconnect_config.h>
 
 // BSP-Specific
@@ -50,12 +55,12 @@
 #include "b_u585i_iot02a.h"
 
 // Constants
-#define APP_VERSION 			"02.24.14"		// Version string
+#define APP_VERSION 			"05.09.14"		// Version string
 #define MQTT_PUBLISH_PERIOD_MS 	( 3000 )		// Size of statically allocated buffers for holding topic names and payloads.
 
 // @brief	IOTConnect configuration defined by application
 #if !defined(IOTCONFIG_USE_DISCOVERY_SYNC)
-static IotConnectAwsrtosConfig awsrtos_config;
+static IotConnectCustomMQTTConfig custom_mqtt_config;
 #endif
 
 static bool is_downloading = false;
@@ -64,11 +69,10 @@ static bool is_downloading = false;
 
 // Prototypes
 static BaseType_t init_sensors( void );
-static char* create_telemetry_json(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axes_t accel_data,
-								BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data);
-static void on_command(IotclEventData data);
-static void command_status(IotclEventData data, bool status, const char *command_name, const char *message);
-static void on_ota(IotclEventData data);
+static int create_and_send_telemetry(BSP_MOTION_SENSOR_Axes_t accel_data,
+		BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data);
+static void on_command(IotclC2dEventData data);
+static void on_ota(IotclC2dEventData data);
 static bool is_ota_agent_file_initialized(void);
 static int split_url(const char *url, char **host_name, char**resource);
 static bool is_app_version_same_as_ota(const char *version);
@@ -112,18 +116,18 @@ void iotconnect_app( void * )
 
     IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
     config->cpid = cpid;
-	config->env = iotc_env;
-	config->duid = device_id;
-	config->cmd_cb = on_command;
+    config->env = iotc_env;
+    config->duid = device_id;
+    config->cmd_cb = on_command;
 
 #ifdef IOTCONFIG_ENABLE_OTA
-	config->ota_cb = on_ota;
+    config->ota_cb = on_ota;
 #else
-	config->ota_cb = NULL;
+    config->ota_cb = NULL;
 #endif
 
-	config->status_cb = NULL;
-	config->auth_info.type = IOTC_X509;
+    config->status_cb = NULL;
+    config->auth_info.type = IOTC_X509;
     config->auth_info.mqtt_root_ca               = xPkiObjectFromLabel( TLS_MQTT_ROOT_CA_CERT_LABEL );
     config->auth_info.data.cert_info.device_cert = xPkiObjectFromLabel( TLS_CERT_LABEL );
     config->auth_info.data.cert_info.device_key  = xPkiObjectFromLabel( TLS_KEY_PRV_LABEL );;
@@ -140,12 +144,9 @@ void iotconnect_app( void * )
     	vTaskDelete( NULL );
     }
 
-    awsrtos_config.host = mqtt_endpoint_url;
-	iotconnect_sdk_init(&awsrtos_config);
+    custom_mqtt_config.host = mqtt_endpoint_url;
+    iotconnect_sdk_init(&custom_mqtt_config);
 #endif
-
-	LogInfo("Sending telemetry\r\n");
-	vTaskDelay(2000);
 
     while (1) {
         /* Interpret sensor data */
@@ -157,19 +158,7 @@ void iotconnect_app( void * )
         sensor_error |= BSP_MOTION_SENSOR_GetAxes( 1, MOTION_MAGNETO, &xMagnetoAxes );
 
         if (sensor_error == BSP_ERROR_NONE) {
-			IotclMessageHandle message = iotcl_telemetry_create();
-            char* json_message = create_telemetry_json(message, xAcceleroAxes, xGyroAxes, xMagnetoAxes);
-
-            if (json_message == NULL) {
-				LogError("Could not create telemetry data\r\n");
-                vTaskDelete( NULL );
-            }
-
-			LogDebug("Telemetry: %s\r\n", json_message);
-
-			iotconnect_sdk_send_packet(json_message);  // underlying code will report an error
-			iotcl_destroy_serialized(json_message);
-			iotcl_telemetry_destroy(message);
+			create_and_send_telemetry(xAcceleroAxes, xGyroAxes, xMagnetoAxes);
         }
 
         vTaskDelay( pdMS_TO_TICKS( MQTT_PUBLISH_PERIOD_MS ) );
@@ -202,103 +191,73 @@ static BaseType_t init_sensors( void )
 /* @brief 	Create JSON message containing telemetry data to publish
  *
  */
-static char *create_telemetry_json(IotclMessageHandle msg, BSP_MOTION_SENSOR_Axes_t accel_data,
-								BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data) {
+static int create_and_send_telemetry(BSP_MOTION_SENSOR_Axes_t accel_data,
+		BSP_MOTION_SENSOR_Axes_t gyro_data, BSP_MOTION_SENSOR_Axes_t mag_data) {
 
-    // Optional. The first time you create a data point, the current timestamp will be automatically added
-    // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
-    iotcl_telemetry_add_with_iso_time(msg, NULL);
+    IotclMessageHandle msg = iotcl_telemetry_create();
 
-	iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.xval);
-	iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.yval);
-	iotcl_telemetry_set_number(msg, "gyro_z", gyro_data.zval);
+    iotcl_telemetry_set_number(msg, "gyro_x", gyro_data.xval);
+    iotcl_telemetry_set_number(msg, "gyro_y", gyro_data.yval);
+    iotcl_telemetry_set_number(msg, "gyro_z", gyro_data.zval);
 
-	iotcl_telemetry_set_number(msg, "accelerometer_x", accel_data.xval);
-	iotcl_telemetry_set_number(msg, "accelerometer_y", accel_data.yval);
-	iotcl_telemetry_set_number(msg, "accelerometer_z", accel_data.zval);
+    iotcl_telemetry_set_number(msg, "accelerometer_x", accel_data.xval);
+    iotcl_telemetry_set_number(msg, "accelerometer_y", accel_data.yval);
+    iotcl_telemetry_set_number(msg, "accelerometer_z", accel_data.zval);
 
-#if 0
-    iotcl_telemetry_set_number(msg, "magnetometer_x", mag_data.x);
-    iotcl_telemetry_set_number(msg, "magnetometer_y", mag_data.y);
-    iotcl_telemetry_set_number(msg, "magnetometer_z", mag_data.z);
-#endif
+    iotcl_telemetry_set_number(msg, "magnetometer_x", mag_data.xval);
+    iotcl_telemetry_set_number(msg, "magnetometer_y", mag_data.yval);
+    iotcl_telemetry_set_number(msg, "magnetometer_z", mag_data.zval);
 
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
 
-    const char* str = iotcl_create_serialized_string(msg, false);
-
-	if (str == NULL) {
-		LogInfo( "serialized_string is NULL");
-	}
-
-	iotcl_telemetry_destroy(msg);
-    return (char* )str;
+    iotcl_mqtt_send_telemetry(msg, true);
+    iotcl_telemetry_destroy(msg);
 }
 
 
 /* @brief	Callback when a a cloud-to-device command is received on the subscribed MQTT topic
  */
-static void on_command(IotclEventData data) {
-	if (data == NULL ) {
-		LogWarn("on_command called with data = NULL");
-		return;
-	}
+static void on_command(IotclC2dEventData data) {
+    const char *command = iotcl_c2d_get_command(data);
+    const char *ack_id = iotcl_c2d_get_ack_id(data);
+    if (command) {
+        IOTCL_INFO("Command %s received with %s ACK ID\n", command,
+                        ack_id ? ack_id : "no");
 
-	char *command = iotcl_clone_command(data);
+        if(NULL != strstr(command, "led-red") ) {
+            if (NULL != strstr(command, "on")) {
+                BSP_LED_On(LED_RED);
+            } else {
+                BSP_LED_Off(LED_RED);
+            }
+        } else if(NULL != strstr(command, "led-green") ) {
+            if (NULL != strstr(command, "on")) {
+                BSP_LED_On(LED_GREEN);
+            } else {
+                BSP_LED_Off(LED_GREEN);
+            }
+        }
 
-    if (NULL != command) {
-    	LogInfo("Received command: %s", command);
-
-    	if(NULL != strstr(command, "led-red") ) {
-			if (NULL != strstr(command, "on")) {
-				LogInfo("led-red on");
-				BSP_LED_On(LED_RED);
-			} else {
-				LogInfo("led-red off");
-				BSP_LED_Off(LED_RED);
-			}
-			command_status(data, true, command, "OK");
-		} else if(NULL != strstr(command, "led-green") ) {
-			if (NULL != strstr(command, "on")) {
-				BSP_LED_On(LED_GREEN);
-			} else {
-				BSP_LED_Off(LED_GREEN);
-			}
-			command_status(data, true, command, "OK");
-		} else {
-			LogInfo("command not recognized");
-			command_status(data, false, command, "Not implemented");
-		}
-        free((void*) command);
+        // could be a command without acknowledgement, so ackID can be null
+        if (ack_id) {
+            iotcl_mqtt_send_cmd_ack(ack_id, IOTCL_C2D_EVT_CMD_FAILED,
+	                            "Not implemented");
+        }
     } else {
-		LogInfo("No command, internal error");
-        command_status(data, false, "?", "Internal error");
+        IOTCL_ERROR(0, "No command, internal error");
+        // could be a command without acknowledgement, so ackID can be null
+        if (ack_id) {
+            iotcl_mqtt_send_cmd_ack(ack_id, IOTCL_C2D_EVT_CMD_FAILED,
+ 	                            "Internal error");
+        }
     }
 }
-
-
-/* @brief	Generate a command acknowledgement message and publish it on the events topic
- *
- */
-static void command_status(IotclEventData data, bool status, const char *command_name, const char *message) {
-    const char *ack = iotcl_create_ack_string_and_destroy_event(data, status, message);				// defined in iotc-c-lib iotconnect_evvent.c
-
-    if (ack == NULL) {
-    	LogInfo("command: no ack required");
-    	return;
-    }
-
-	LogInfo("command: %s status=%s: %s\r\n", command_name, status ? "OK" : "Failed", message);
-	LogInfo("Sent CMD ack: %s\r\n", ack);
-	iotconnect_sdk_send_packet(ack);
-	free((void*) ack);
-}
-
 
 #ifdef IOTCONFIG_ENABLE_OTA
-static void on_ota(IotclEventData data) {
-    const char *message = NULL;
-    char *url = iotcl_clone_download_url(data, 0);
+static void on_ota(IotclC2dEventData data) {
+	const char *message = NULL;
+	const char *url = iotcl_c2d_get_ota_url(data, 0);
+	const char *ack_id = iotcl_c2d_get_ack_id(data);
     bool success = false;
     int needs_ota_commit = false;
 
@@ -306,19 +265,19 @@ static void on_ota(IotclEventData data) {
 
     if (NULL != url) {
     	LogInfo("Download URL is: %s\r\n", url);
-        const char *version = iotcl_clone_sw_version(data);
+		const char *version = iotcl_c2d_get_ota_sw_version(data);
         if (!version) {
             success = true;
             message = "Failed to parse message";
         } else {
-        	// ignore wrong app versions in this application
+            // ignore wrong app versions in this application
             success = true;
             if (is_app_version_same_as_ota(version)) {
-            	LogWarn("OTA request for same version %s. Sending successn", version);
+            	IOTCL_WARN(0, "OTA request for same version %s. Sending successn", version);
             } else if (app_needs_ota_update(version)) {
-            	LogWarn("OTA update is required for version %s.", version);
+            	IOTCL_WARN(0, "OTA update is required for version %s.", version);
             }  else {
-            	LogWarn("Device firmware version %s is newer than OTA version %s. Sending failuren", APP_VERSION,
+            	IOTCL_WARN(0, "Device firmware version %s is newer than OTA version %s. Sending failuren", APP_VERSION,
                         version);
                 // Not sure what to do here. The app version is better than OTA version.
                 // Probably a development version, so return failure?
@@ -338,33 +297,21 @@ static void on_ota(IotclEventData data) {
         free((void*) url);
         free((void*) version);
     } else {
-        // compatibility with older events
-        // This app does not support FOTA with older back ends, but the user can add the functionality
-        const char *command = iotcl_clone_command(data);
-        if (NULL != command) {
-            // URL will be inside the command
-        	LogInfo("Command is: %s", command);
-            message = "Old back end URLS are not supported by the app";
-            free((void*) command);
-        }
+        IOTCL_ERROR(0, "OTA has no URL");
+        success = false;
     }
 
-
-    const char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
-    if (NULL != ack) {
-    	LogInfo("Sent OTA ack: %s", ack);
-        iotconnect_sdk_send_packet(ack);
-        free((void*) ack);
-    }
-
-    LogInfo("on_ota done");
+    iotcl_mqtt_send_ota_ack(ack_id,
+            (success ?
+                        IOTCL_C2D_EVT_OTA_SUCCESS :
+                        IOTCL_C2D_EVT_OTA_DOWNLOAD_FAILED), message);
 
     if (needs_ota_commit) {
-    	// 5 second Delay to allow OTA ack to be sent
-    	LogInfo("wait 5 seconds to commit OTA");
-    	vTaskDelay( pdMS_TO_TICKS( 5000 ) );
-    	LogInfo("committing OTA...");
-    	iotc_ota_fw_apply();
+        // 5 second Delay to allow OTA ack to be sent
+    	IOTCL_INFO("wait 5 seconds to commit OTA");
+        vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+        IOTCL_INFO("committing OTA...");
+        iotc_ota_fw_apply();
     }
 }
 
@@ -379,7 +326,7 @@ static int split_url(const char *url, char **host_name, char**resource) {
     size_t url_len = strlen(url);
 
     if (!host_name || !resource) {
-    	LogError("split_url: Invalid usage");
+    	IOTCL_ERROR(0, "split_url: Invalid usage");
         return -1;
     }
     *host_name = NULL;
@@ -422,11 +369,11 @@ static int start_ota(char *url)
     char *resource;
     int status;
 
-    LogInfo ("start_ota: %s", url);
+    IOTCL_INFO("start_ota: %s", url);
 
     status = split_url(url, &host_name, &resource);
     if (status) {
-        LogError("start_ota: Error while splitting the URL, code: 0x%x", status);
+        IOTCL_ERROR(status, "start_ota: Error while splitting the URL, code: 0x%x", status);
         return status;
     }
 

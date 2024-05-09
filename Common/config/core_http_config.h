@@ -36,7 +36,7 @@
 
 
 /*
- *  HTTP Timeout set to 3000 milliseconds as default timeout of 10ms results in a timeout
+ *  HTTP Timeout set to 15000 milliseconds as default timeout of 10ms results in a timeout
  *  before we get a response.
  */
 #define HTTP_RECV_RETRY_TIMEOUT_MS    ( 15000U )
