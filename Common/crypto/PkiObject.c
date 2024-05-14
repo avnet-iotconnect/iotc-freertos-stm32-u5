@@ -32,7 +32,6 @@
 
 #include "mbedtls/platform.h"
 
-#include "ota_config.h"
 
 /*-----------------------------------------------------------*/
 

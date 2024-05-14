@@ -29,7 +29,7 @@
 #include "kvstore_config_plat.h"
 #include "test_param_config.h"
 #include "test_execution_config.h"
-#include "ota_config.h"
+
 
 typedef enum KvStoreEnum
 {
@@ -38,7 +38,8 @@ typedef enum KvStoreEnum
     CS_CORE_MQTT_PORT,
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
-    CS_TIME_HWM_S_1970,
+    CS_IOTC_CPID,
+    CS_IOTC_ENV,
     CS_NUM_KEYS
 } KVStoreKey_t;
 
@@ -96,6 +97,15 @@ typedef enum KvStoreEnum
 #if !defined( WIFI_SECURITY_DFLT )
     #define WIFI_SECURITY_DFLT    ""
 #endif /* !defined ( WIFI_SECURITY_DFLT ) */
+
+#if !defined( IOTC_CPID_DFLT )
+#define IOTC_CPID_DFLT    ""
+#endif /* !defined ( IOTC_CPID_DFLT ) */
+
+#if !defined( IOTC_ENV_DFLT )
+#define IOTC_ENV_DFLT    ""
+#endif /* !defined ( IOTC_ENV_DFLT ) */
+
 /* -------------------------------- Values for common attributes -------------------------------- */
 
 /* Array to map between strings and KVStoreKey_t IDs */
@@ -106,7 +116,8 @@ typedef enum KvStoreEnum
         "mqtt_port",       \
         "wifi_ssid",       \
         "wifi_credential", \
-        "time_hwm"         \
+        "cpid",	           \
+        "env"              \
     }
 
 #define KV_STORE_DEFAULTS                                                          \
@@ -116,7 +127,8 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_UINT32, MQTT_PORT_DFLT ),     /* CS_CORE_MQTT_PORT */     \
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
-        KV_DFLT( KV_TYPE_UINT32, 0 ),                  /* CS_TIME_HWM_S_1970 */    \
+        KV_DFLT( KV_TYPE_STRING, IOTC_CPID_DFLT ),     /* CS_IOTC_CPID */          \
+        KV_DFLT( KV_TYPE_STRING, IOTC_ENV_DFLT ),      /* CS_IOTC_ENV */           \
     }
 
 #endif /* _KVSTORE_CONFIG_H */

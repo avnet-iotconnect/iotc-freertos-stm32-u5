@@ -184,7 +184,11 @@
  *
  * @see aws_default_root_certificates.h
  */
-#define pkcs11_ROOT_CA_CERT_LABEL                          "root_ca_cert"
-#define pkcs11configLABEL_ROOT_CERTIFICATE                 ( pkcs11_ROOT_CA_CERT_LABEL )
+#define pkcs11_MQTT_ROOT_CA_CERT_LABEL                          "root_ca_cert"
+#define pkcs11configLABEL_MQTT_ROOT_CERTIFICATE                 ( pkcs11_MQTT_ROOT_CA_CERT_LABEL )
+
+#define pkcs11_HTTPS_ROOT_CA_CERT_LABEL                          "godaddy_ca_cert"
+#define pkcs11configLABEL_HTTPS_ROOT_CERTIFICATE                 ( pkcs11_HTTPS_ROOT_CA_CERT_LABEL )
+
 
 #endif /* _CORE_PKCS11_CONFIG_H_ */

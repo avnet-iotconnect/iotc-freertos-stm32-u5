@@ -111,3 +111,9 @@
 [submodule "Middleware/Unity"]
 	path = Middleware/Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "iotc-freertos-sdk"]
+	path = iotc-freertos-sdk
+	url = git@github.com:avnet-iotconnect/iotc-freertos-sdk.git
+[submodule "iotc-c-lib"]
+	path = iotc-c-lib
+	url = git@github.com:avnet-iotconnect/iotc-c-lib.git

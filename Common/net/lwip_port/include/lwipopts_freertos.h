@@ -225,7 +225,7 @@
  * thread calling socket/netconn functions instead of allocating one
  * semaphore per netconn (and per select etc.)
  */
-/*#define LWIP_NETCONN_SEM_PER_THREAD    1 */
+#define LWIP_NETCONN_SEM_PER_THREAD    1
 
 /** LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread,
  * writing from a 2nd thread and closing from a 3rd thread at the same time.

@@ -34,7 +34,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "ota.h"
 #include "ota_pal.h"
 #include "stm32u5xx.h"
 #include "stm32u5xx_hal_flash.h"
@@ -155,64 +154,6 @@ static BaseType_t xCalculateImageHash( const unsigned char * pucImageAddress,
                                        unsigned char * pucHashBuffer,
                                        size_t uxHashBufferLength,
                                        size_t * puxHashLength );
-
-const char * otaImageStateToString( OtaImageState_t xState )
-{
-    const char * pcStateString;
-
-    switch( xState )
-    {
-        case OtaImageStateTesting:
-            pcStateString = "OtaImageStateTesting";
-            break;
-
-        case OtaImageStateAccepted:
-            pcStateString = "OtaImageStateAccepted";
-            break;
-
-        case OtaImageStateRejected:
-            pcStateString = "OtaImageStateRejected";
-            break;
-
-        case OtaImageStateAborted:
-            pcStateString = "OtaImageStateAborted";
-            break;
-
-        default:
-        case OtaImageStateUnknown:
-            pcStateString = "OtaImageStateUnknown";
-            break;
-    }
-
-    return pcStateString;
-}
-
-const char * otaPalImageStateToString( xPalImageState )
-{
-    const char * pcPalImageState;
-
-    switch( xPalImageState )
-    {
-        case OtaPalImageStatePendingCommit:
-            pcPalImageState = "OtaPalImageStatePendingCommit";
-            break;
-
-        case OtaPalImageStateValid:
-            pcPalImageState = "OtaPalImageStateValid";
-            break;
-
-        case OtaPalImageStateInvalid:
-            pcPalImageState = "OtaPalImageStateInvalid";
-            break;
-
-        default:
-        case OtaPalImageStateUnknown:
-            pcPalImageState = "OtaPalImageStateUnknown";
-            break;
-    }
-
-    return pcPalImageState;
-}
 
 static const char * pcPalStateToString( OtaPalState_t xPalState )
 {
@@ -919,32 +860,9 @@ OtaPalStatus_t otaPal_CloseFile( OtaFileContext_t * const pxFileContext )
         ( pxContext->xPalState == OTA_PAL_FILE_OPEN ) )
 
     {
-        unsigned char pucHashBuffer[ MBEDTLS_MD_MAX_SIZE ];
-        size_t uxHashLength = 0;
-
-        if( xCalculateImageHash( ( unsigned char * ) ( pxContext->ulBaseAddress ),
-                                 ( size_t ) pxContext->ulImageSize,
-                                 pucHashBuffer, MBEDTLS_MD_MAX_SIZE, &uxHashLength ) != pdTRUE )
-        {
-            uxOtaStatus = OTA_PAL_COMBINE_ERR( OtaPalFileClose, 0 );
-        }
-
-        if( OTA_PAL_MAIN_ERR( uxOtaStatus ) == OtaPalSuccess )
-        {
-            uxOtaStatus = prvValidateSignature( ( char * ) pxFileContext->pCertFilepath,
-                                                pxFileContext->pSignature->data,
-                                                pxFileContext->pSignature->size,
-                                                pucHashBuffer,
-                                                uxHashLength );
-        }
-
         if( OTA_PAL_MAIN_ERR( uxOtaStatus ) == OtaPalSuccess )
         {
             pxContext->xPalState = OTA_PAL_PENDING_ACTIVATION;
-        }
-        else
-        {
-            otaPal_SetPlatformImageState( pxFileContext, OtaImageStateRejected );
         }
     }
     else if( pxFileContext == NULL )
@@ -959,17 +877,7 @@ OtaPalStatus_t otaPal_CloseFile( OtaFileContext_t * const pxFileContext )
     return uxOtaStatus;
 }
 
-
-OtaPalStatus_t otaPal_Abort( OtaFileContext_t * const pxFileContext )
-{
-    OtaPalStatus_t palStatus = otaPal_SetPlatformImageState( pxFileContext, OtaImageStateAborted );
-
-    pxFileContext->pFile = NULL;
-
-    return palStatus;
-}
-
-OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const pxFileContext )
+OtaPalStatus_t otaPal_ActivateNewImage(void)
 {
     OtaPalStatus_t uxOtaStatus = OTA_PAL_COMBINE_ERR( OtaPalActivateFailed, 0 );
 
@@ -983,7 +891,7 @@ OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const pxFileContext )
         pxContext->ulPendingBank = pxContext->ulTargetBank;
 
         pxContext->xPalState = OTA_PAL_PENDING_SELF_TEST;
-        uxOtaStatus = otaPal_ResetDevice( pxFileContext );
+        uxOtaStatus = otaPal_ResetDevice();
     }
 
     return uxOtaStatus;
@@ -1016,7 +924,7 @@ void otaPal_EarlyInit( void )
                 ( void ) prvWritePalNvContext( pxCtx );
 
                 LogError( "Detected a watchdog reset during first boot of new image. Reverting to bank: %d", ulGetOtherBank( pxCtx->ulTargetBank ) );
-                ( void ) otaPal_ResetDevice( NULL );
+                ( void ) otaPal_ResetDevice();
                 break;
 
             case OTA_PAL_NEW_IMAGE_WDT_RESET:
@@ -1034,14 +942,30 @@ void otaPal_EarlyInit( void )
     }
 }
 
+
+/*
+ * @brief	Accept a new firmware image as valid and working
+ */
+void otaPal_AcceptImage(void)
+{
+	otaPal_SetPlatformImageState(NULL, OtaImageStateAccepted);
+}
+
+/*
+ * @brief	Reject a new firmware iamge and roll back to previous image
+ */
+void otaPal_RejectImage(void)
+{
+	otaPal_SetPlatformImageState(NULL, OtaImageStateRejected);
+}
+
+
 OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileContext,
                                              OtaImageState_t xDesiredState )
 {
     OtaPalStatus_t uxOtaStatus = OTA_PAL_COMBINE_ERR( OtaPalBadImageState, 0 );
 
     OtaPalContext_t * pxContext = prvGetImageContext();
-
-    LogInfo( "SetPlatformImageState: %s, %s", otaImageStateToString( xDesiredState ), pcPalStateToString( pxContext->xPalState ) );
 
     ( void ) pxFileContext;
 
@@ -1091,7 +1015,7 @@ OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileCont
                     case OTA_PAL_NEW_IMAGE_BOOTED:
                         pxContext->xPalState = OTA_PAL_SELF_TEST_FAILED;
                         pxContext->ulPendingBank = ulGetOtherBank( pxContext->ulTargetBank );
-                        uxOtaStatus = otaPal_ResetDevice( pxFileContext );
+                        uxOtaStatus = otaPal_ResetDevice();
                         break;
 
                     case OTA_PAL_SELF_TEST_FAILED:
@@ -1198,8 +1122,6 @@ OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileCont
                         break;
 
                     default:
-                        uxOtaStatus = OTA_PAL_COMBINE_ERR( OtaPalAbortFailed, 0 );
-                        pxContext->xPalState = OTA_PAL_READY;
                         break;
                 }
 
@@ -1215,56 +1137,10 @@ OtaPalStatus_t otaPal_SetPlatformImageState( OtaFileContext_t * const pxFileCont
 }
 
 
-OtaPalImageState_t otaPal_GetPlatformImageState( OtaFileContext_t * const pxFileContext )
-{
-    OtaPalImageState_t xOtaState = OtaPalImageStateUnknown;
-    OtaPalContext_t * pxContext = prvGetImageContext();
 
-    ( void ) pxFileContext;
-
-    configASSERT( pxFileContext );
-
-    if( pxContext != NULL )
-    {
-        switch( pxContext->xPalState )
-        {
-            case OTA_PAL_NOT_INITIALIZED:
-            case OTA_PAL_INVALID:
-            default:
-                xOtaState = OtaPalImageStateUnknown;
-                break;
-
-            case OTA_PAL_READY:
-            case OTA_PAL_FILE_OPEN:
-            case OTA_PAL_REJECTED:
-            case OTA_PAL_NEW_IMAGE_WDT_RESET:
-            case OTA_PAL_SELF_TEST_FAILED:
-                xOtaState = OtaPalImageStateInvalid;
-                break;
-
-            case OTA_PAL_PENDING_ACTIVATION:
-            case OTA_PAL_PENDING_SELF_TEST:
-            case OTA_PAL_NEW_IMAGE_BOOTED:
-                xOtaState = OtaPalImageStatePendingCommit;
-                break;
-
-            case OTA_PAL_ACCEPTED:
-                xOtaState = OtaPalImageStateValid;
-                break;
-        }
-
-        LogInfo( "GetPlatformImageState: %s: %s", otaPalImageStateToString( xOtaState ), pcPalStateToString( pxContext->xPalState ) );
-    }
-
-    return xOtaState;
-}
-
-
-OtaPalStatus_t otaPal_ResetDevice( OtaFileContext_t * const pxFileContext )
+OtaPalStatus_t otaPal_ResetDevice(void)
 {
     OtaPalStatus_t uxStatus = OTA_PAL_COMBINE_ERR( OtaPalSuccess, 0 );
-
-    ( void ) pxFileContext;
     OtaPalContext_t * pxContext = prvGetImageContext();
 
     LogSys( "OTA PAL reset request received. xPalState: %s", pcPalStateToString( pxContext->xPalState ) );

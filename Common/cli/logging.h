@@ -64,6 +64,9 @@ void vLoggingPrintf( const char * const pcLogLevel,
                      const unsigned long ulLineNumber,
                      const char * const pcFormat,
                      ... );
+void vLoggingPrintf2(const char *const pcLogLevel, const char *const pcFileName,
+		const unsigned long ulLineNumber, int err_code,
+		const char *const pcFormat, ...);
 void vLoggingInit( void );
 void vLoggingDeInit( void );
 void vDyingGasp( void );

@@ -130,6 +130,7 @@ extern const CLI_Command_Definition_t xCommandDef_kill;
 extern const CLI_Command_Definition_t xCommandDef_killAll;
 extern const CLI_Command_Definition_t xCommandDef_heapStat;
 extern const CLI_Command_Definition_t xCommandDef_reset;
+extern const CLI_Command_Definition_t xCommandDef_erase;
 extern const CLI_Command_Definition_t xCommandDef_uptime;
 extern const CLI_Command_Definition_t xCommandDef_rngtest;
 extern const CLI_Command_Definition_t xCommandDef_assert;

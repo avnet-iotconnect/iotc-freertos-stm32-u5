@@ -38,6 +38,9 @@
 
 #include "core_cm33.h"
 
+#include "lfs.h"
+#include "fs/lfs_port.h"
+
 static void prvPSCommand( ConsoleIO_t * const pxConsoleIO,
                           uint32_t ulArgc,
                           char * ppcArgv[] );
@@ -58,6 +61,10 @@ static void vResetCommand( ConsoleIO_t * const pxCIO,
                            uint32_t ulArgc,
                            char * ppcArgv[] );
 
+static void vEraseCommand( ConsoleIO_t * const pxCIO,
+                           uint32_t ulArgc,
+                           char * ppcArgv[] );
+
 static void vUptimeCommand( ConsoleIO_t * const pxCIO,
                             uint32_t ulArgc,
                             char * ppcArgv[] );
@@ -66,6 +73,9 @@ static void vAssertCommand( ConsoleIO_t * const pxCIO,
                             uint32_t ulArgc,
                             char * ppcArgv[] );
 
+/* Required for "erase" command */
+extern lfs_t xLfsCtx;
+extern const struct lfs_config * pxCfg;
 
 
 const CLI_Command_Definition_t xCommandDef_ps =
@@ -122,6 +132,15 @@ const CLI_Command_Definition_t xCommandDef_reset =
     "    Reset (reboot) the system.\r\n\n",
     vResetCommand
 };
+
+const CLI_Command_Definition_t xCommandDef_erase =
+{
+    "erase",
+    "erase\r\n"
+    "    Erase the config settings by reformatting the erasing the QSPI Flash.\r\n\n",
+    vEraseCommand
+};
+
 
 const CLI_Command_Definition_t xCommandDef_uptime =
 {
@@ -626,9 +645,28 @@ static void vResetCommand( ConsoleIO_t * const pxCIO,
                            char * ppcArgv[] )
 {
     pxCIO->print( "Resetting device." );
-    vTaskDelay( pdMS_TO_TICKS( 100 ) );
+
+    vTaskDelay( pdMS_TO_TICKS( 200 ) );
     NVIC_SystemReset();
 }
+
+static void vEraseCommand( ConsoleIO_t * const pxCIO,
+                           uint32_t ulArgc,
+                           char * ppcArgv[] )
+{
+	int err;
+
+    pxCIO->print( "Erasing QSPI NVM, will reset afterwards." );
+
+    err = lfs_unmount( &xLfsCtx);
+    err = lfs_format( &xLfsCtx, pxCfg );
+
+    pxCIO->print( "Resetting device." );
+
+    vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+    NVIC_SystemReset();
+}
+
 
 static void vUptimeCommand( ConsoleIO_t * const pxCIO,
                             uint32_t ulArgc,

@@ -37,39 +37,29 @@
 			<locationURI>WORKSPACE_LOC/Common</locationURI>
 		</link>
 		<link>
+			<name>Drivers</name>
+			<type>2</type>
+			<location>/home/mgilhespie/projects/iotconnect/new/iotc-freertos-stm32-u5/Drivers</location>
+		</link>
+		<link>
 			<name>Libraries</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>Drivers/bsp</name>
+			<name>Middleware</name>
 			<type>2</type>
-			<locationURI>WORKSPACE_LOC/Drivers/BSP/B-U585I-IOT02A</locationURI>
+			<location>/home/mgilhespie/projects/iotconnect/new/iotc-freertos-stm32-u5/Middleware</location>
 		</link>
 		<link>
-			<name>Drivers/hts221</name>
+			<name>iotc-c-lib</name>
 			<type>2</type>
-			<locationURI>WORKSPACE_LOC/Drivers/BSP/Components/hts221</locationURI>
+			<location>/home/mgilhespie/projects/iotconnect/new/iotc-freertos-stm32-u5/iotc-c-lib</location>
 		</link>
 		<link>
-			<name>Drivers/iis2mdc</name>
+			<name>iotc-freertos-sdk</name>
 			<type>2</type>
-			<locationURI>WORKSPACE_LOC/Drivers/BSP/Components/iis2mdc</locationURI>
-		</link>
-		<link>
-			<name>Drivers/ism330dhcx</name>
-			<type>2</type>
-			<locationURI>WORKSPACE_LOC/Drivers/BSP/Components/ism330dhcx</locationURI>
-		</link>
-		<link>
-			<name>Drivers/lps22hh</name>
-			<type>2</type>
-			<locationURI>WORKSPACE_LOC/Drivers/BSP/Components/lps22hh</locationURI>
-		</link>
-		<link>
-			<name>Drivers/lsm6dso</name>
-			<type>2</type>
-			<locationURI>WORKSPACE_LOC/Drivers/BSP/Components/lsm6dso</locationURI>
+			<location>/home/mgilhespie/projects/iotconnect/new/iotc-freertos-stm32-u5/iotc-freertos-sdk</location>
 		</link>
 		<link>
 			<name>Libraries/CMSIS</name>
@@ -84,7 +74,7 @@
 		<link>
 			<name>Libraries/FreeRTOS-Libraries-Integration-Tests</name>
 			<type>2</type>
-			<location>WORKSPACE_LOC/Middleware/FreeRTOS/FreeRTOS-Libraries-Integration-Tests/src</location>
+			<locationURI>WORKSPACE_LOC/Middleware/FreeRTOS/FreeRTOS-Libraries-Integration-Tests/src</locationURI>
 		</link>
 		<link>
 			<name>Libraries/LittleFS</name>
@@ -99,7 +89,7 @@
 		<link>
 			<name>Libraries/Unity</name>
 			<type>2</type>
-			<location>WORKSPACE_LOC/Middleware/Unity</location>
+			<locationURI>WORKSPACE_LOC/Middleware/Unity</locationURI>
 		</link>
 		<link>
 			<name>Libraries/backoffAlgorithm</name>

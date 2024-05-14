@@ -41,7 +41,6 @@
 #include "task.h"
 #include "event_groups.h"
 
-#include "kvstore.h"
 #include "mqtt_metrics.h"
 
 /* MQTT library includes. */
@@ -64,6 +63,9 @@
 
 #include "mbedtls_transport.h"
 #include "sys_evt.h"
+
+#include "iotconnect.h"
+#include "iotc_mqtt_client.h"
 
 /*-----------------------------------------------------------*/
 
@@ -162,6 +164,19 @@ typedef struct MQTTAgentTaskCtx
 static const char * pcAlpnProtocols[] = { AWS_IOT_MQTT_ALPN, NULL };
 
 static MQTTAgentHandle_t xDefaultInstanceHandle = NULL;
+
+/*
+ * @brief Configuration settings passed from iotconnect_init().
+ */
+static struct IOTCMQTTConfig {
+	const char *host;
+	int port;
+	char *duid;
+	PkiObject_t root_ca_cert;
+	PkiObject_t client_certificate;
+	PkiObject_t private_key;
+} mqtt_config;
+
 
 /*-----------------------------------------------------------*/
 
@@ -869,17 +884,22 @@ static MQTTStatus_t prvConfigureAgentTaskCtx( MQTTAgentTaskCtx_t * pxCtx,
         pxCtx->xConnectInfo.pPassword = NULL;
         pxCtx->xConnectInfo.passwordLength = 0U;
 
-        pxCtx->xConnectInfo.pClientIdentifier = KVStore_getStringHeap( CS_CORE_THING_NAME, &uxTempSize );
+        pxCtx->xConnectInfo.pClientIdentifier = mqtt_config.duid;
 
-        if( ( pxCtx->xConnectInfo.pClientIdentifier != NULL ) &&
-            ( uxTempSize > 0 ) &&
-            ( uxTempSize <= UINT16_MAX ) )
-        {
-            pxCtx->xConnectInfo.clientIdentifierLength = ( uint16_t ) uxTempSize;
+        if( pxCtx->xConnectInfo.pClientIdentifier != NULL ) {
+
+        	size_t device_id_len = strlen(pxCtx->xConnectInfo.pClientIdentifier);
+
+        	if (device_id_len > 0 && device_id_len <= UINT16_MAX) {
+        		pxCtx->xConnectInfo.clientIdentifierLength = ( uint16_t ) device_id_len;
+        	} else {
+                LogError( "Invalid device id length" );
+                xStatus = MQTTNoMemory;
+        	}
         }
         else
         {
-            LogError( "Invalid client identifier read from KVStore." );
+            LogError( "Invalid device id" );
             xStatus = MQTTNoMemory;
         }
     }
@@ -910,25 +930,23 @@ static MQTTStatus_t prvConfigureAgentTaskCtx( MQTTAgentTaskCtx_t * pxCtx,
 
     if( xStatus == MQTTSuccess )
     {
-        pxCtx->pcMqttEndpoint = KVStore_getStringHeap( CS_CORE_MQTT_ENDPOINT,
-                                                       &( pxCtx->uxMqttEndpointLen ) );
+        pxCtx->pcMqttEndpoint = mqtt_config.host;
 
-        if( ( pxCtx->uxMqttEndpointLen == 0 ) ||
-            ( pxCtx->pcMqttEndpoint == NULL ) )
+        if( pxCtx->pcMqttEndpoint == NULL || strlen(pxCtx->pcMqttEndpoint) == 0)
         {
-            LogError( "Invalid mqtt endpoint read from KVStore." );
+            LogError( "Invalid mqtt endpoint." );
             xStatus = MQTTNoMemory;
         }
     }
 
     if( xStatus == MQTTSuccess )
     {
-        pxCtx->ulMqttPort = KVStore_getUInt32( CS_CORE_MQTT_PORT, &( xSuccess ) );
+        pxCtx->ulMqttPort = mqtt_config.port;
 
         if( ( pxCtx->ulMqttPort == 0 ) ||
             ( xSuccess == pdFALSE ) )
         {
-            LogError( "Invalid mqtt port number read from KVStore." );
+            LogError( "Invalid mqtt port number." );
             xStatus = MQTTNoMemory;
         }
     }
@@ -955,8 +973,22 @@ MQTTAgentHandle_t xGetMqttAgentHandle( void )
 
 /*-----------------------------------------------------------*/
 
-void vMQTTAgentTask( void * pvParameters )
+extern void vLogCertInfo( mbedtls_x509_crt * pxCert, const char * pcMessage );
+
+#define MQTTS_PORT		8883
+
+void vMQTTAgentTask(void *arg)
 {
+    IotConnectDeviceClientConfig *client_config = arg;
+
+    mqtt_config.host = client_config->host;
+    mqtt_config.port = MQTTS_PORT;
+    mqtt_config.duid = client_config->duid;
+    mqtt_config.root_ca_cert = client_config->auth->mqtt_root_ca;
+    mqtt_config.client_certificate =
+			client_config->auth->data.cert_info.device_cert;
+    mqtt_config.private_key = client_config->auth->data.cert_info.device_key;
+
     MQTTStatus_t xMQTTStatus = MQTTSuccess;
     TlsTransportStatus_t xTlsStatus = TLS_TRANSPORT_CONNECT_FAILURE;
     BaseType_t xExitFlag = pdFALSE;
@@ -965,12 +997,6 @@ void vMQTTAgentTask( void * pvParameters )
     uint8_t * pucNetworkBuffer = NULL;
     NetworkContext_t * pxNetworkContext = NULL;
     uint16_t usNextRetryBackOff = 0U;
-
-    PkiObject_t xPrivateKey = xPkiObjectFromLabel( TLS_KEY_PRV_LABEL );
-    PkiObject_t xClientCertificate = xPkiObjectFromLabel( TLS_CERT_LABEL );
-    PkiObject_t pxRootCaChain[ 1 ] = { xPkiObjectFromLabel( TLS_ROOT_CA_CERT_LABEL ) };
-
-    ( void ) pvParameters;
 
     /* Miscellaneous initialization. */
     ulGlobalEntryTimeMs = prvGetTimeMs();
@@ -999,9 +1025,9 @@ void vMQTTAgentTask( void * pvParameters )
     {
         xTlsStatus = mbedtls_transport_configure( pxNetworkContext,
                                                   pcAlpnProtocols,
-                                                  &xPrivateKey,
-                                                  &xClientCertificate,
-                                                  pxRootCaChain,
+                                                  &mqtt_config.private_key,
+                                                  &mqtt_config.client_certificate,
+                                                  &mqtt_config.root_ca_cert,
                                                   1 );
 
         if( xTlsStatus != TLS_TRANSPORT_SUCCESS )

@@ -46,6 +46,13 @@
 #include "test_execution_config.h"
 
 #include "cli/cli.h"
+#include "iotc_sntp_time.h"
+#include "config/iotconnect_config.h"
+#include "ota_pal.h"
+
+/*	Number of polls and interval between polls to check if sntp time has synced */
+#define SNTP_SYNC_POLL_MAX 10
+#define SNTP_SYNC_POLL_INTERVAL_MS	1000
 
 /* Definition for Qualification Test */
 #if ( DEVICE_ADVISOR_TEST_ENABLED == 1 ) || ( MQTT_TEST_ENABLED == 1 ) || ( TRANSPORT_INTERFACE_TEST_ENABLED == 1 ) || \
@@ -61,6 +68,13 @@ static lfs_t * pxLfsCtx = NULL;
 
 EventGroupHandle_t xSystemEvents = NULL;
 
+
+extern void net_main( void * pvParameters );
+extern void sntp_task( void * );
+extern void iotconnect_app( void * );
+extern void otaPal_EarlyInit( void );
+
+
 lfs_t * pxGetDefaultFsCtx( void )
 {
     while( pxLfsCtx == NULL )
@@ -74,14 +88,16 @@ lfs_t * pxGetDefaultFsCtx( void )
     return pxLfsCtx;
 }
 
+lfs_t xLfsCtx = { 0 };
+const struct lfs_config * pxCfg;
+
 static int fs_init( void )
 {
-    static lfs_t xLfsCtx = { 0 };
 
     struct lfs_info xDirInfo = { 0 };
 
     /* Block time of up to 1 s for filesystem to initialize */
-    const struct lfs_config * pxCfg = pxInitializeOSPIFlashFs( pdMS_TO_TICKS( 30 * 1000 ) );
+    pxCfg = pxInitializeOSPIFlashFs( pdMS_TO_TICKS( 30 * 1000 ) );
 
     /* mount the filesystem */
     int err = lfs_mount( &xLfsCtx, pxCfg );
@@ -115,6 +131,7 @@ static int fs_init( void )
         }
     }
 
+#ifdef IOTCONFIG_ENABLE_OTA
     if( lfs_stat( &xLfsCtx, "/ota", &xDirInfo ) == LFS_ERR_NOENT )
     {
         err = lfs_mkdir( &xLfsCtx, "/ota" );
@@ -124,6 +141,7 @@ static int fs_init( void )
             LogError( "Failed to create /ota directory." );
         }
     }
+#endif
 
     if( err == 0 )
     {
@@ -167,34 +185,6 @@ static void vRelocateVectorTable( void )
     __enable_irq();
 }
 
-
-static void vHeartbeatTask( void * pvParameters )
-{
-    ( void ) pvParameters;
-
-    HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
-    HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
-
-    while( 1 )
-    {
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-        HAL_GPIO_TogglePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin );
-    }
-}
-
-extern void net_main( void * pvParameters );
-extern void vMQTTAgentTask( void * );
-extern void vMotionSensorsPublish( void * );
-extern void vEnvironmentSensorPublishTask( void * );
-extern void vShadowDeviceTask( void * );
-extern void vOTAUpdateTask( void * pvParam );
-extern void vDefenderAgentTask( void * );
-#if DEMO_QUALIFICATION_TEST
-    extern void run_qualification_main( void * );
-#endif /* DEMO_QUALIFICATION_TEST */
-
-extern void otaPal_EarlyInit( void );
-
 void vInitTask( void * pvArgs )
 {
     BaseType_t xResult;
@@ -217,7 +207,28 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
+#ifdef IOTCONFIG_ENABLE_OTA
         otaPal_EarlyInit();
+
+        /*
+         * TODO: Check if this is the first boot of a new image or pending self test.
+         */
+
+        /*
+         * Users can add code to check sanity of image.  If we get a hardware reset or watchdog reset
+         * prior to otaPal_SetPlatformImageState being called then the OTA mechanism will discard the
+         * current image and revert to the previous image.
+         *
+         * The sanity of the image can be checked here or elsewhere, perhaps once the device is
+         * connected.  For demonstration purposes we set the image to accepted here.
+         */
+
+        if (1) {
+        	otaPal_AcceptImage();
+        } else {
+        	otaPal_RejectImage();
+        }
+#endif
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
@@ -228,36 +239,34 @@ void vInitTask( void * pvArgs )
         LogError( "Failed to mount filesystem." );
     }
 
-    ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
-    xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
-    configASSERT( xResult == pdTRUE );
+    ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
     xResult = xTaskCreate( &net_main, "MxNet", 1024, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
 
-    #if DEMO_QUALIFICATION_TEST
-        xResult = xTaskCreate( run_qualification_main, "QualTest", 4096, NULL, 10, NULL );
-        configASSERT( xResult == pdTRUE );
-    #else
-        xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 2048, NULL, 10, NULL );
-        configASSERT( xResult == pdTRUE );
+    ( void ) xEventGroupWaitBits( xSystemEvents,
+                                  EVT_MASK_NET_CONNECTED,
+                                  0x00,
+                                  pdTRUE,
+                                  portMAX_DELAY );
 
-        xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
-        configASSERT( xResult == pdTRUE );
+    HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
+    HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
 
-        xResult = xTaskCreate( vEnvironmentSensorPublishTask, "EnvSense", 1024, NULL, 6, NULL );
-        configASSERT( xResult == pdTRUE );
+    xResult = xTaskCreate( &sntp_task, "sntp", 2048, NULL, 23, NULL );
+    configASSERT( xResult == pdTRUE );
 
-        xResult = xTaskCreate( vMotionSensorsPublish, "MotionS", 2048, NULL, 5, NULL );
-        configASSERT( xResult == pdTRUE );
+    for (int t=0; t < SNTP_SYNC_POLL_MAX; t++) {
+    	if (is_sntp_time_synced()) {
+    		break;
+    	}
 
-        xResult = xTaskCreate( vShadowDeviceTask, "ShadowDevice", 1024, NULL, 5, NULL );
-        configASSERT( xResult == pdTRUE );
+    	vTaskDelay(pdMS_TO_TICKS(SNTP_SYNC_POLL_INTERVAL_MS));
+    }
 
-        xResult = xTaskCreate( vDefenderAgentTask, "AWSDefender", 2048, NULL, 5, NULL );
-        configASSERT( xResult == pdTRUE );
-    #endif /* DEMO_QUALIFICATION_TEST */
+    xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 4096, NULL, 5, NULL );
+    configASSERT( xResult == pdTRUE );
 
     while( 1 )
     {
