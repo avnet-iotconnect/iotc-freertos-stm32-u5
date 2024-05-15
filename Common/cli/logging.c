@@ -284,6 +284,92 @@ void vLoggingPrintf( const char * const pcLogLevel,
     }
 }
 
+/* @brief	Variant of vLoggingPrintf that adds and err_code field.
+ */
+void vLoggingPrintf2(const char *const pcLogLevel, const char *const pcFileName,
+		const unsigned long ulLineNumber, int err_code,
+		const char *const pcFormat, ...) {
+	uint32_t ulLenTotal = 0;
+	int32_t lLenPart = -1;
+	va_list args;
+	const char *pcTaskName = NULL;
+	BaseType_t xSchedulerWasSuspended = pdFALSE;
+
+	/* Additional info to place at the start of the log line */
+	if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+		pcTaskName = pcTaskGetName( NULL);
+	} else {
+		pcTaskName = "None";
+	}
+
+	if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+		xSchedulerWasSuspended = pdTRUE;
+		/* Suspend the scheduler to access pcPrintBuff */
+		vTaskSuspendAll();
+	}
+
+	pcPrintBuff[0] = '\0';
+	lLenPart = snprintf(pcPrintBuff,
+	dlMAX_PRINT_STRING_LENGTH, "<%-3.3s> %8lu [%-10.10s] %d ", pcLogLevel,
+			((unsigned long) xTaskGetTickCount() / portTICK_PERIOD_MS)
+					& 0xFFFFFF, pcTaskName, err_code);
+
+	configASSERT(lLenPart > 0);
+
+	if (lLenPart < dlMAX_PRINT_STRING_LENGTH) {
+		ulLenTotal = lLenPart;
+	} else {
+		ulLenTotal = dlMAX_PRINT_STRING_LENGTH;
+	}
+
+	if (ulLenTotal < dlMAX_PRINT_STRING_LENGTH) {
+		/* There are a variable number of parameters. */
+		va_start(args, pcFormat);
+		lLenPart = vsnprintf(&pcPrintBuff[ulLenTotal],
+				( dlMAX_PRINT_STRING_LENGTH - ulLenTotal), pcFormat, args);
+		va_end(args);
+
+		configASSERT(lLenPart > 0);
+
+		if (lLenPart + ulLenTotal < dlMAX_PRINT_STRING_LENGTH) {
+			ulLenTotal += lLenPart;
+		} else {
+			ulLenTotal = dlMAX_PRINT_STRING_LENGTH;
+		}
+	}
+
+	/* remove any \r\n\0 characters at the end of the message */
+	while (ulLenTotal > 0
+			&& (pcPrintBuff[ulLenTotal - 1] == '\r'
+					|| pcPrintBuff[ulLenTotal - 1] == '\n'
+					|| pcPrintBuff[ulLenTotal - 1] == '\0')) {
+		pcPrintBuff[ulLenTotal - 1] = '\0';
+		ulLenTotal--;
+	}
+
+	if ((pcFileName != NULL) && (ulLineNumber > 0)
+			&& (ulLenTotal < dlMAX_LOG_LINE_LENGTH)) {
+		/* Add the trailer including file name and line number */
+		lLenPart = snprintf(&pcPrintBuff[ulLenTotal],
+				( dlMAX_LOG_LINE_LENGTH - ulLenTotal), " (%s:%lu)", pcFileName,
+				ulLineNumber);
+
+		configASSERT(lLenPart > 0);
+
+		if (lLenPart + ulLenTotal < dlMAX_LOG_LINE_LENGTH) {
+			ulLenTotal += lLenPart;
+		} else {
+			ulLenTotal = dlMAX_LOG_LINE_LENGTH;
+		}
+	}
+
+	vSendLogMessage((void*) pcPrintBuff, ulLenTotal);
+
+	if (xSchedulerWasSuspended == pdTRUE) {
+		xTaskResumeAll();
+	}
+}
+
 /*-----------------------------------------------------------*/
 void vLoggingDeInit( void )
 {
