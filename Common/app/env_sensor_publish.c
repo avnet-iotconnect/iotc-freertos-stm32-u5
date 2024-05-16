@@ -54,130 +54,13 @@
 /* Sensor includes */
 #include "b_u585i_iot02a_env_sensors.h"
 
-
-#define MQTT_PUBLISH_MAX_LEN                 ( 512 )
-#define MQTT_PUBLISH_TIME_BETWEEN_MS         ( 1000 )
-#define MQTT_PUBLISH_TOPIC                   "env_sensor_data"
-#define MQTT_PUBLICH_TOPIC_STR_LEN           ( 256 )
-#define MQTT_PUBLISH_BLOCK_TIME_MS           ( 1000 )
-#define MQTT_PUBLISH_NOTIFICATION_WAIT_MS    ( 1000 )
-
-#define MQTT_NOTIFY_IDX                      ( 1 )
-#define MQTT_PUBLISH_QOS                     ( MQTTQoS0 )
+#include "app/sensor_telemetry.h"
 
 /*-----------------------------------------------------------*/
 
-/**
- * @brief Defines the structure to use as the command callback context in this
- * demo.
- */
-struct MQTTAgentCommandContext
-{
-    MQTTStatus_t xReturnStatus;
-    TaskHandle_t xTaskToNotify;
-};
-
-typedef struct
-{
-    float_t fTemperature0;
-    float_t fTemperature1;
-    float_t fHumidity;
-    float_t fBarometricPressure;
-} EnvironmentalSensorData_t;
+#define MQTT_PUBLISH_TIME_BETWEEN_MS 3000		/* Interval between reading environment sensors */
 
 /*-----------------------------------------------------------*/
-
-static void prvPublishCommandCallback( MQTTAgentCommandContext_t * pxCommandContext,
-                                       MQTTAgentReturnInfo_t * pxReturnInfo )
-{
-    configASSERT( pxCommandContext != NULL );
-    configASSERT( pxReturnInfo != NULL );
-
-    pxCommandContext->xReturnStatus = pxReturnInfo->returnCode;
-
-    if( pxCommandContext->xTaskToNotify != NULL )
-    {
-        /* Send the context's ulNotificationValue as the notification value so
-         * the receiving task can check the value it set in the context matches
-         * the value it receives in the notification. */
-        ( void ) xTaskNotifyGiveIndexed( pxCommandContext->xTaskToNotify,
-                                         MQTT_NOTIFY_IDX );
-    }
-}
-
-/*-----------------------------------------------------------*/
-
-static BaseType_t prvPublishAndWaitForAck( MQTTAgentHandle_t xAgentHandle,
-                                           const char * pcTopic,
-                                           const void * pvPublishData,
-                                           size_t xPublishDataLen )
-{
-    BaseType_t xResult = pdFALSE;
-    MQTTStatus_t xStatus;
-
-    configASSERT( pcTopic != NULL );
-    configASSERT( pvPublishData != NULL );
-    configASSERT( xPublishDataLen > 0 );
-
-    MQTTPublishInfo_t xPublishInfo =
-    {
-        .qos             = MQTT_PUBLISH_QOS,
-        .retain          = 0,
-        .dup             = 0,
-        .pTopicName      = pcTopic,
-        .topicNameLength = strlen( pcTopic ),
-        .pPayload        = pvPublishData,
-        .payloadLength   = xPublishDataLen
-    };
-
-    MQTTAgentCommandContext_t xCommandContext =
-    {
-        .xTaskToNotify = xTaskGetCurrentTaskHandle(),
-        .xReturnStatus = MQTTIllegalState,
-    };
-
-    MQTTAgentCommandInfo_t xCommandParams =
-    {
-        .blockTimeMs                 = MQTT_PUBLISH_BLOCK_TIME_MS,
-        .cmdCompleteCallback         = prvPublishCommandCallback,
-        .pCmdCompleteCallbackContext = &xCommandContext,
-    };
-
-    /* Clear the notification index */
-    xTaskNotifyStateClearIndexed( NULL, MQTT_NOTIFY_IDX );
-
-
-    xStatus = MQTTAgent_Publish( xAgentHandle,
-                                 &xPublishInfo,
-                                 &xCommandParams );
-
-    if( xStatus == MQTTSuccess )
-    {
-        xResult = ulTaskNotifyTakeIndexed( MQTT_NOTIFY_IDX,
-                                           pdTRUE,
-                                           pdMS_TO_TICKS( MQTT_PUBLISH_NOTIFICATION_WAIT_MS ) );
-
-        if( xResult == 0 )
-        {
-            LogError( "Timed out while waiting for publish ACK or Sent event. xTimeout = %d",
-                      pdMS_TO_TICKS( MQTT_PUBLISH_NOTIFICATION_WAIT_MS ) );
-            xResult = pdFALSE;
-        }
-        else if( xCommandContext.xReturnStatus != MQTTSuccess )
-        {
-            LogError( "MQTT Agent returned error code: %d during publish operation.",
-                      xCommandContext.xReturnStatus );
-            xResult = pdFALSE;
-        }
-    }
-    else
-    {
-        LogError( "MQTTAgent_Publish returned error code: %d.",
-                  xStatus );
-    }
-
-    return xResult;
-}
 
 static BaseType_t xIsMqttConnected( void )
 {
@@ -244,9 +127,7 @@ void vEnvironmentSensorPublishTask( void * pvParameters )
 {
     BaseType_t xResult = pdFALSE;
     BaseType_t xExitFlag = pdFALSE;
-    char payloadBuf[ MQTT_PUBLISH_MAX_LEN ];
     MQTTAgentHandle_t xAgentHandle = NULL;
-    char pcTopicString[ MQTT_PUBLICH_TOPIC_STR_LEN ] = { 0 };
     size_t uxTopicLen = 0;
 
     ( void ) pvParameters;
@@ -259,19 +140,6 @@ void vEnvironmentSensorPublishTask( void * pvParameters )
         vTaskDelete( NULL );
     }
 
-    uxTopicLen = KVStore_getString( CS_CORE_THING_NAME, pcTopicString, MQTT_PUBLICH_TOPIC_STR_LEN );
-
-    if( uxTopicLen > 0 )
-    {
-        uxTopicLen = strlcat( pcTopicString, "/" MQTT_PUBLISH_TOPIC, MQTT_PUBLICH_TOPIC_STR_LEN );
-    }
-
-    if( ( uxTopicLen == 0 ) || ( uxTopicLen >= MQTT_PUBLICH_TOPIC_STR_LEN ) )
-    {
-        LogError( "Failed to construct topic string." );
-        xExitFlag = pdTRUE;
-    }
-
     vSleepUntilMQTTAgentReady();
 
     xAgentHandle = xGetMqttAgentHandle();
@@ -280,49 +148,21 @@ void vEnvironmentSensorPublishTask( void * pvParameters )
     {
         TickType_t xTicksToWait = pdMS_TO_TICKS( MQTT_PUBLISH_TIME_BETWEEN_MS );
         TimeOut_t xTimeOut;
+        struct IOTC_U5IOT_TELEMETRY payload;
 
         vTaskSetTimeOutState( &xTimeOut );
 
-        EnvironmentalSensorData_t xEnvData;
-        xResult = xUpdateSensorData( &xEnvData );
+        xResult = xUpdateSensorData( &payload.xEnvSensorData );
 
-        if( xResult != pdTRUE )
+        if( xResult == pdTRUE )
         {
-            LogError( "Error while reading sensor data." );
-        }
-        else if( xIsMqttConnected() == pdTRUE )
-        {
-            int bytesWritten = 0;
+            payload.bMotionSensorValid = false;
+            payload.bEnvSensorDataValid = true;
 
-            /* Write to */
-            bytesWritten = snprintf( payloadBuf,
-                                     MQTT_PUBLISH_MAX_LEN,
-                                     "{ \"temp_0_c\": %f, \"rh_pct\": %f, \"temp_1_c\": %f, \"baro_mbar\": %f }",
-                                     xEnvData.fTemperature0,
-                                     xEnvData.fHumidity,
-                                     xEnvData.fTemperature1,
-                                     xEnvData.fBarometricPressure );
-
-            if( bytesWritten < MQTT_PUBLISH_MAX_LEN )
-            {
-                xResult = prvPublishAndWaitForAck( xAgentHandle,
-                                                   pcTopicString,
-                                                   payloadBuf,
-                                                   bytesWritten );
-            }
-            else if( bytesWritten > 0 )
-            {
-                LogError( "Not enough buffer space." );
-            }
-            else
-            {
-                LogError( "Printf call failed." );
-            }
-
-            if( xResult == pdTRUE )
-            {
-                LogDebug( payloadBuf );
-            }
+        	if( xIsMqttConnected() == pdTRUE )
+        	{
+            	iotcApp_create_and_send_telemetry_json(&payload, sizeof(payload));
+        	}
         }
 
         /* Adjust remaining tick count */

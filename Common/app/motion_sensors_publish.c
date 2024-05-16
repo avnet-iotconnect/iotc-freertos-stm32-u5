@@ -65,6 +65,8 @@
 #include "iotcl_log.h"
 #include "iotcl.h"
 
+#include "app/sensor_telemetry.h"
+
 /**
  * @brief Size of statically allocated buffers for holding topic names and
  * payloads.
@@ -217,47 +219,6 @@ static BaseType_t xInitSensors( void )
     return( lBspError == BSP_ERROR_NONE ? pdTRUE : pdFALSE );
 }
 
-typedef struct IOTC_U5IOT_TELEMETRY {
-    BSP_MOTION_SENSOR_Axes_t xAcceleroAxes,
-	xGyroAxes,
-	xMagnetoAxes;
-}iotcU5IotTelemetry_t;
-
-/* @brief 	Create JSON message containing telemetry data to publish
- *
- */
-void iotcApp_create_and_send_telemetry_json(
-		const void *pToTelemetryStruct, size_t siz) {
-
-    const struct IOTC_U5IOT_TELEMETRY * p = NULL;
-    IotclMessageHandle msg = iotcl_telemetry_create();
-
-    if(siz != sizeof(const struct IOTC_U5IOT_TELEMETRY)) {
-        IOTCL_ERROR(siz, "Expected telemetry size does not match");
-        return;
-    }
-
-    p=pToTelemetryStruct;
-
-    // Optional. The first time you create a data poiF\Z\nt, the current timestamp will be automatically added
-    // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
-	// FIXME: new iotc-c-lib has new API for adding timestamps
-	// iotcl_telemetry_add_with_iso_time(msg, NULL);
-
-    iotcl_telemetry_set_number(msg, "acc_x", (double)p->xAcceleroAxes.x);
-    iotcl_telemetry_set_number(msg, "acc_y", (double)p->xAcceleroAxes.y);
-    iotcl_telemetry_set_number(msg, "acc_z", (double)p->xAcceleroAxes.z);
-    iotcl_telemetry_set_number(msg, "gyro_x", (double)p->xGyroAxes.x);
-    iotcl_telemetry_set_number(msg, "gyro_y", (double)p->xGyroAxes.y);
-    iotcl_telemetry_set_number(msg, "gyro_z", (double)p->xGyroAxes.z);
-    iotcl_telemetry_set_number(msg, "mgnt_x", (double)p->xMagnetoAxes.x);
-    iotcl_telemetry_set_number(msg, "mgnt_y", (double)p->xMagnetoAxes.y);
-    iotcl_telemetry_set_number(msg, "mgnt_Z", (double)p->xMagnetoAxes.z);
-
-    iotcl_mqtt_send_telemetry(msg, true);
-    iotcl_telemetry_destroy(msg);
-}
-
 
 /*-----------------------------------------------------------*/
 void vMotionSensorsPublish( void * pvParameters )
@@ -313,7 +274,10 @@ void vMotionSensorsPublish( void * pvParameters )
 
         if( lBspError == BSP_ERROR_NONE )
         {
-            if(xIsMqttAgentConnected() == pdTRUE)
+            payload.bMotionSensorValid = true;
+            payload.bEnvSensorDataValid = false;
+
+        	if(xIsMqttAgentConnected() == pdTRUE)
             {
             	iotcApp_create_and_send_telemetry_json(&payload, sizeof(payload));
             }
