@@ -233,8 +233,8 @@ void vInitTask( void * pvArgs )
 
     ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
-    xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
-    configASSERT( xResult == pdTRUE );
+//        xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
+//        configASSERT( xResult == pdTRUE );
 
     xResult = xTaskCreate( &net_main, "MxNet", 1024, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
