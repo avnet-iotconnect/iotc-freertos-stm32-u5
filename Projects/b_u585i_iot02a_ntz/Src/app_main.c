@@ -46,6 +46,7 @@
 #include "test_execution_config.h"
 
 #include "cli/cli.h"
+#include "ota_pal.h"
 
 #include "iotconnect_app.h"
 
@@ -117,6 +118,7 @@ static int fs_init( void )
         }
     }
 
+#ifdef IOTCONFIG_ENABLE_OTA
     if( lfs_stat( &xLfsCtx, "/ota", &xDirInfo ) == LFS_ERR_NOENT )
     {
         err = lfs_mkdir( &xLfsCtx, "/ota" );
@@ -126,6 +128,7 @@ static int fs_init( void )
             LogError( "Failed to create /ota directory." );
         }
     }
+#endif
 
     if( err == 0 )
     {
@@ -220,7 +223,28 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
+#ifdef IOTCONFIG_ENABLE_OTA
         otaPal_EarlyInit();
+
+        /*
+         * TODO: Check if this is the first boot of a new image or pending self test.
+         */
+
+        /*
+         * Users can add code to check sanity of image.  If we get a hardware reset or watchdog reset
+         * prior to otaPal_SetPlatformImageState being called then the OTA mechanism will discard the
+         * current image and revert to the previous image.
+         *
+         * The sanity of the image can be checked here or elsewhere, perhaps once the device is
+         * connected.  For demonstration purposes we set the image to accepted here.
+         */
+
+        if (1) {
+            otaPal_AcceptImage();
+        } else {
+            otaPal_RejectImage();
+        }
+#endif
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
