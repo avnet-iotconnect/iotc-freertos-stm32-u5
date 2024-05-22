@@ -61,6 +61,12 @@
 /* Sensor includes */
 #include "b_u585i_iot02a_motion_sensors.h"
 
+#include "iotcl_telemetry.h"
+#include "iotcl_log.h"
+#include "iotcl.h"
+
+#include "app/sensor_telemetry.h"
+
 /**
  * @brief Size of statically allocated buffers for holding topic names and
  * payloads.
@@ -213,6 +219,7 @@ static BaseType_t xInitSensors( void )
     return( lBspError == BSP_ERROR_NONE ? pdTRUE : pdFALSE );
 }
 
+
 /*-----------------------------------------------------------*/
 void vMotionSensorsPublish( void * pvParameters )
 {
@@ -259,52 +266,20 @@ void vMotionSensorsPublish( void * pvParameters )
     {
         /* Interpret sensor data */
         int32_t lBspError = BSP_ERROR_NONE;
-        BSP_MOTION_SENSOR_Axes_t xAcceleroAxes, xGyroAxes, xMagnetoAxes;
+        struct IOTC_U5IOT_TELEMETRY payload;
 
-        lBspError = BSP_MOTION_SENSOR_GetAxes( 0, MOTION_GYRO, &xGyroAxes );
-        lBspError |= BSP_MOTION_SENSOR_GetAxes( 0, MOTION_ACCELERO, &xAcceleroAxes );
-        lBspError |= BSP_MOTION_SENSOR_GetAxes( 1, MOTION_MAGNETO, &xMagnetoAxes );
+        lBspError = BSP_MOTION_SENSOR_GetAxes( 0, MOTION_GYRO, &payload.xGyroAxes );
+        lBspError |= BSP_MOTION_SENSOR_GetAxes( 0, MOTION_ACCELERO, &payload.xAcceleroAxes );
+        lBspError |= BSP_MOTION_SENSOR_GetAxes( 1, MOTION_MAGNETO, &payload.xMagnetoAxes );
 
         if( lBspError == BSP_ERROR_NONE )
         {
-            int lbytesWritten = snprintf( pcPayloadBuf,
-                                          MQTT_PUBLISH_MAX_LEN,
-                                          "{"
-                                          "\"acceleration_mG\":"
-                                          "{"
-                                          "\"x\": %ld,"
-                                          "\"y\": %ld,"
-                                          "\"z\": %ld"
-                                          "},"
-                                          "\"gyro_mDPS\":"
-                                          "{"
-                                          "\"x\": %ld,"
-                                          "\"y\": %ld,"
-                                          "\"z\": %ld"
-                                          "},"
-                                          "\"magnetometer_mGauss\":"
-                                          "{"
-                                          "\"x\": %ld,"
-                                          "\"y\": %ld,"
-                                          "\"z\": %ld"
-                                          "}"
-                                          "}",
-                                          xAcceleroAxes.x, xAcceleroAxes.y, xAcceleroAxes.z,
-                                          xGyroAxes.x, xGyroAxes.y, xGyroAxes.z,
-                                          xMagnetoAxes.x, xMagnetoAxes.y, xMagnetoAxes.z );
+            payload.bMotionSensorValid = true;
+            payload.bEnvSensorDataValid = false;
 
-            if( ( lbytesWritten < MQTT_PUBLISH_MAX_LEN ) &&
-                ( xIsMqttAgentConnected() == pdTRUE ) )
+        	if(xIsMqttAgentConnected() == pdTRUE)
             {
-                xResult = prvPublishAndWaitForAck( xAgentHandle,
-                                                   pcTopicString,
-                                                   pcPayloadBuf,
-                                                   ( size_t ) lbytesWritten );
-
-                if( xResult != pdPASS )
-                {
-                    LogError( "Failed to publish motion sensor data" );
-                }
+            	iotcApp_create_and_send_telemetry_json(&payload, sizeof(payload));
             }
         }
 

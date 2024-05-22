@@ -39,63 +39,73 @@ typedef enum KvStoreEnum
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
     CS_TIME_HWM_S_1970,
+    CS_IOTC_CPID,
+    CS_IOTC_ENV,
     CS_NUM_KEYS
 } KVStoreKey_t;
 
 /* -------------------------------- Values for common attributes -------------------------------- */
 
-/* Note: If TEST_AUTOMATION_INTEGRATION == 1 (in ota_config.h), settings below will be forcedly used
+/* Note: If TEST_AUTOMATION_INTEGRATION == 1 (in ota_config.h), settings below will be forcely used
  * in runtime. Please set to 0 or "" to skip them if you want to use the value in flash. */
 #if ( TEST_AUTOMATION_INTEGRATION == 1 )
-    #if ( OTA_E2E_TEST_ENABLED == 1 )
+#if ( OTA_E2E_TEST_ENABLED == 1 )
 
-        #define THING_NAME_DFLT       IOT_THING_NAME
-        #define MQTT_ENDPOINT_DFLT    MQTT_SERVER_ENDPOINT
-        #define MQTT_PORT_DFLT        MQTT_SERVER_PORT
+#define THING_NAME_DFLT       IOT_THING_NAME
+#define MQTT_ENDPOINT_DFLT    MQTT_SERVER_ENDPOINT
+#define MQTT_PORT_DFLT        MQTT_SERVER_PORT
 
-    #elif ( MQTT_TEST_ENABLED == 1 )
+#elif ( MQTT_TEST_ENABLED == 1 )
 
-        #define THING_NAME_DFLT       MQTT_TEST_CLIENT_IDENTIFIER
-        #define MQTT_ENDPOINT_DFLT    MQTT_SERVER_ENDPOINT
-        #define MQTT_PORT_DFLT        MQTT_SERVER_PORT
+#define THING_NAME_DFLT       MQTT_TEST_CLIENT_IDENTIFIER
+#define MQTT_ENDPOINT_DFLT    MQTT_SERVER_ENDPOINT
+#define MQTT_PORT_DFLT        MQTT_SERVER_PORT
 
-    #elif ( TRANSPORT_INTERFACE_TEST_ENABLED == 1 )
+#elif ( TRANSPORT_INTERFACE_TEST_ENABLED == 1 )
 
-        #define MQTT_ENDPOINT_DFLT    ECHO_SERVER_ENDPOINT
-        #define MQTT_PORT_DFLT        ECHO_SERVER_PORT
+#define MQTT_ENDPOINT_DFLT    ECHO_SERVER_ENDPOINT
+#define MQTT_PORT_DFLT        ECHO_SERVER_PORT
 
-    #elif ( DEVICE_ADVISOR_TEST_ENABLED == 1 )
+#elif ( DEVICE_ADVISOR_TEST_ENABLED == 1 )
 
-        #define THING_NAME_DFLT       IOT_THING_NAME
-        #define MQTT_ENDPOINT_DFLT    MQTT_SERVER_ENDPOINT
-        #define MQTT_PORT_DFLT        MQTT_SERVER_PORT
+#define THING_NAME_DFLT       IOT_THING_NAME
+#define MQTT_ENDPOINT_DFLT    MQTT_SERVER_ENDPOINT
+#define MQTT_PORT_DFLT        MQTT_SERVER_PORT
 
-    #endif /* ( OTA_E2E_TEST_ENABLED == 1 ) || ( MQTT_TEST_ENABLED == 1 ) */
+#endif /* ( OTA_E2E_TEST_ENABLED == 1 ) || ( MQTT_TEST_ENABLED == 1 ) */
 #endif /* if ( TEST_AUTOMATION_INTEGRATION == 1 ) */
 
 #if !defined( THING_NAME_DFLT )
-    #define THING_NAME_DFLT    ""
+#define THING_NAME_DFLT    ""
 #endif /* !defined ( THING_NAME_DFLT ) */
 
 #if !defined( MQTT_ENDPOINT_DFLT )
-    #define MQTT_ENDPOINT_DFLT    ""
+#define MQTT_ENDPOINT_DFLT    ""
 #endif /* !defined ( MQTT_ENDPOINT_DFLT ) */
 
 #if !defined( MQTT_PORT_DFLT )
-    #define MQTT_PORT_DFLT    8883
+#define MQTT_PORT_DFLT    8883
 #endif /* !defined ( MQTT_PORT_DFLT ) */
 
 #if !defined( WIFI_SSID_DFLT )
-    #define WIFI_SSID_DFLT    ""
+#define WIFI_SSID_DFLT    ""
 #endif /* !defined ( WIFI_SSID_DFLT ) */
 
 #if !defined( WIFI_PASSWORD_DFLT )
-    #define WIFI_PASSWORD_DFLT    ""
+#define WIFI_PASSWORD_DFLT    ""
 #endif /* !defined ( WIFI_PASSWORD_DFLT ) */
 
 #if !defined( WIFI_SECURITY_DFLT )
-    #define WIFI_SECURITY_DFLT    ""
+#define WIFI_SECURITY_DFLT    ""
 #endif /* !defined ( WIFI_SECURITY_DFLT ) */
+
+#if !defined( IOTC_CPID_DFLT )
+#define IOTC_CPID_DFLT    ""
+#endif /* !defined ( IOTC_CPID_DFLT ) */
+
+#if !defined( IOTC_ENV_DFLT )
+#define IOTC_ENV_DFLT    ""
+#endif /* !defined ( IOTC_ENV_DFLT ) */
 /* -------------------------------- Values for common attributes -------------------------------- */
 
 /* Array to map between strings and KVStoreKey_t IDs */
@@ -106,7 +116,9 @@ typedef enum KvStoreEnum
         "mqtt_port",       \
         "wifi_ssid",       \
         "wifi_credential", \
-        "time_hwm"         \
+        "time_hwm",        \
+        "cpid",            \
+        "env"              \
     }
 
 #define KV_STORE_DEFAULTS                                                          \
@@ -117,6 +129,8 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
         KV_DFLT( KV_TYPE_UINT32, 0 ),                  /* CS_TIME_HWM_S_1970 */    \
+        KV_DFLT( KV_TYPE_STRING, IOTC_CPID_DFLT ), 	   /* CS_IOTC_CPID */          \
+        KV_DFLT( KV_TYPE_STRING, IOTC_ENV_DFLT ), 	   /* CS_IOTC_ENV */           \
     }
 
 #endif /* _KVSTORE_CONFIG_H */

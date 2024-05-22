@@ -34,5 +34,6 @@
 
 #include "logging.h"
 
+#define HTTP_RECV_RETRY_TIMEOUT_MS    ( 15000U )
 
 #endif /* CORE_HTTP_CONFIG_H */

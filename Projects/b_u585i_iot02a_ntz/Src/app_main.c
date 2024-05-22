@@ -46,6 +46,9 @@
 #include "test_execution_config.h"
 
 #include "cli/cli.h"
+#include "ota_pal.h"
+
+#include "iotconnect_app.h"
 
 /* Definition for Qualification Test */
 #if ( DEVICE_ADVISOR_TEST_ENABLED == 1 ) || ( MQTT_TEST_ENABLED == 1 ) || ( TRANSPORT_INTERFACE_TEST_ENABLED == 1 ) || \
@@ -115,6 +118,7 @@ static int fs_init( void )
         }
     }
 
+#ifdef IOTCONFIG_ENABLE_OTA
     if( lfs_stat( &xLfsCtx, "/ota", &xDirInfo ) == LFS_ERR_NOENT )
     {
         err = lfs_mkdir( &xLfsCtx, "/ota" );
@@ -124,6 +128,7 @@ static int fs_init( void )
             LogError( "Failed to create /ota directory." );
         }
     }
+#endif
 
     if( err == 0 )
     {
@@ -189,6 +194,7 @@ extern void vEnvironmentSensorPublishTask( void * );
 extern void vShadowDeviceTask( void * );
 extern void vOTAUpdateTask( void * pvParam );
 extern void vDefenderAgentTask( void * );
+extern void iotconnect_app( void * );
 #if DEMO_QUALIFICATION_TEST
     extern void run_qualification_main( void * );
 #endif /* DEMO_QUALIFICATION_TEST */
@@ -217,7 +223,28 @@ void vInitTask( void * pvArgs )
 
         LogInfo( "File System mounted." );
 
+#ifdef IOTCONFIG_ENABLE_OTA
         otaPal_EarlyInit();
+
+        /*
+         * TODO: Check if this is the first boot of a new image or pending self test.
+         */
+
+        /*
+         * Users can add code to check sanity of image.  If we get a hardware reset or watchdog reset
+         * prior to otaPal_SetPlatformImageState being called then the OTA mechanism will discard the
+         * current image and revert to the previous image.
+         *
+         * The sanity of the image can be checked here or elsewhere, perhaps once the device is
+         * connected.  For demonstration purposes we set the image to accepted here.
+         */
+
+        if (1) {
+            otaPal_AcceptImage();
+        } else {
+            otaPal_RejectImage();
+        }
+#endif
 
         ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
@@ -230,8 +257,8 @@ void vInitTask( void * pvArgs )
 
     ( void ) xEventGroupSetBits( xSystemEvents, EVT_MASK_FS_READY );
 
-    xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
-    configASSERT( xResult == pdTRUE );
+//        xResult = xTaskCreate( vHeartbeatTask, "Heartbeat", 128, NULL, tskIDLE_PRIORITY, NULL );
+//        configASSERT( xResult == pdTRUE );
 
     xResult = xTaskCreate( &net_main, "MxNet", 1024, NULL, 23, NULL );
     configASSERT( xResult == pdTRUE );
@@ -240,11 +267,11 @@ void vInitTask( void * pvArgs )
         xResult = xTaskCreate( run_qualification_main, "QualTest", 4096, NULL, 10, NULL );
         configASSERT( xResult == pdTRUE );
     #else
-        xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 2048, NULL, 10, NULL );
-        configASSERT( xResult == pdTRUE );
-
-        xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
-        configASSERT( xResult == pdTRUE );
+//        xResult = xTaskCreate( vMQTTAgentTask, "MQTTAgent", 2048, NULL, 10, NULL );
+//        configASSERT( xResult == pdTRUE );
+//
+//        xResult = xTaskCreate( vOTAUpdateTask, "OTAUpdate", 4096, NULL, tskIDLE_PRIORITY + 1, NULL );
+//        configASSERT( xResult == pdTRUE );
 
         xResult = xTaskCreate( vEnvironmentSensorPublishTask, "EnvSense", 1024, NULL, 6, NULL );
         configASSERT( xResult == pdTRUE );
@@ -252,10 +279,14 @@ void vInitTask( void * pvArgs )
         xResult = xTaskCreate( vMotionSensorsPublish, "MotionS", 2048, NULL, 5, NULL );
         configASSERT( xResult == pdTRUE );
 
-        xResult = xTaskCreate( vShadowDeviceTask, "ShadowDevice", 1024, NULL, 5, NULL );
-        configASSERT( xResult == pdTRUE );
+//        xResult = xTaskCreate( vShadowDeviceTask, "ShadowDevice", 1024, NULL, 5, NULL );
+//        configASSERT( xResult == pdTRUE );
+//
+//        xResult = xTaskCreate( vDefenderAgentTask, "AWSDefender", 2048, NULL, 5, NULL );
+//        configASSERT( xResult == pdTRUE );
+        LogInfo("IOTC RUNNING\n");
 
-        xResult = xTaskCreate( vDefenderAgentTask, "AWSDefender", 2048, NULL, 5, NULL );
+        xResult = xTaskCreate( iotconnect_app, "iotconnect_app", 4096, NULL, 5, NULL );
         configASSERT( xResult == pdTRUE );
     #endif /* DEMO_QUALIFICATION_TEST */
 
