@@ -39,6 +39,7 @@ typedef enum KvStoreEnum
     CS_WIFI_SSID,
     CS_WIFI_CREDENTIAL,
     CS_TIME_HWM_S_1970,
+    CS_IOTC_PLATFORM,
     CS_IOTC_CPID,
     CS_IOTC_ENV,
     CS_NUM_KEYS
@@ -99,6 +100,10 @@ typedef enum KvStoreEnum
 #define WIFI_SECURITY_DFLT    ""
 #endif /* !defined ( WIFI_SECURITY_DFLT ) */
 
+#if !defined( IOTC_PLATFORM_DFLT )
+#define IOTC_PLATFORM_DFLT    ""
+#endif /* !defined ( IOTC_PLATFORM_DFLT ) */
+
 #if !defined( IOTC_CPID_DFLT )
 #define IOTC_CPID_DFLT    ""
 #endif /* !defined ( IOTC_CPID_DFLT ) */
@@ -117,6 +122,7 @@ typedef enum KvStoreEnum
         "wifi_ssid",       \
         "wifi_credential", \
         "time_hwm",        \
+        "platform",        \
         "cpid",            \
         "env"              \
     }
@@ -129,6 +135,7 @@ typedef enum KvStoreEnum
         KV_DFLT( KV_TYPE_STRING, WIFI_SSID_DFLT ),     /* CS_WIFI_SSID */          \
         KV_DFLT( KV_TYPE_STRING, WIFI_PASSWORD_DFLT ), /* CS_WIFI_CREDENTIAL */    \
         KV_DFLT( KV_TYPE_UINT32, 0 ),                  /* CS_TIME_HWM_S_1970 */    \
+        KV_DFLT( KV_TYPE_STRING, IOTC_PLATFORM_DFLT ), /* CS_IOTC_PLATFORM */      \
         KV_DFLT( KV_TYPE_STRING, IOTC_CPID_DFLT ), 	   /* CS_IOTC_CPID */          \
         KV_DFLT( KV_TYPE_STRING, IOTC_ENV_DFLT ), 	   /* CS_IOTC_ENV */           \
     }
