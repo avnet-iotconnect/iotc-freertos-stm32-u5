@@ -169,6 +169,7 @@ static MQTTAgentHandle_t xDefaultInstanceHandle = NULL;
  * @brief Configuration settings passed from iotconnect_init().
  */
 static struct IOTCMQTTConfig {
+	const char *username;
 	const char *host;
 	int port;
 	char *duid;
@@ -880,13 +881,8 @@ static MQTTStatus_t prvConfigureAgentTaskCtx( MQTTAgentTaskCtx_t * pxCtx,
         pxCtx->xConnectInfo.cleanSession = true;
         pxCtx->xConnectInfo.keepAliveSeconds = KEEP_ALIVE_INTERVAL_S;
 
-#if 0  // MG: FIXME Azure/AWS Username
-        pxCtx->xConnectInfo.pUserName = AWS_IOT_METRICS_STRING;
-        pxCtx->xConnectInfo.userNameLength = AWS_IOT_METRICS_STRING_LENGTH;
-#else
-        pxCtx->xConnectInfo.pUserName = NULL;
-        pxCtx->xConnectInfo.userNameLength = 0;
-#endif
+        pxCtx->xConnectInfo.pUserName = mqtt_config.username;
+        pxCtx->xConnectInfo.userNameLength = (uint16_t)strlen(pxCtx->xConnectInfo.pUserName);
 
         pxCtx->xConnectInfo.pPassword = NULL;
         pxCtx->xConnectInfo.passwordLength = 0U;
@@ -988,6 +984,7 @@ void vMQTTAgentTask(void *arg)
 {
     IotConnectDeviceClientConfig *client_config = arg;
 
+    mqtt_config.username = client_config->username;
     mqtt_config.host = client_config->host;
     mqtt_config.port = MQTTS_PORT;
     mqtt_config.duid = client_config->duid;
