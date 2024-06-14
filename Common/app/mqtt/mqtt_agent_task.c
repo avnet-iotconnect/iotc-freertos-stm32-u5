@@ -1115,7 +1115,7 @@ void vMQTTAgentTask(void *arg)
         BackoffAlgorithm_InitializeParams( &xReconnectParams,
                                            RETRY_BACKOFF_BASE,
                                            RETRY_MAX_BACKOFF_DELAY,
-                                           0 );
+                                           BACKOFF_ALGORITHM_RETRY_FOREVER );
 
         xTlsStatus = TLS_TRANSPORT_UNKNOWN_ERROR;
 
@@ -1241,7 +1241,7 @@ void vMQTTAgentTask(void *arg)
             BackoffAlgorithm_InitializeParams( &xReconnectParams,
                                                RETRY_BACKOFF_BASE,
                                                RETRY_MAX_BACKOFF_DELAY,
-                                               0 );
+                                               BACKOFF_ALGORITHM_RETRY_FOREVER );
 
             /* MQTTAgent_CommandLoop() is effectively the agent implementation.  It
              * will manage the MQTT protocol until such time that an error occurs,
