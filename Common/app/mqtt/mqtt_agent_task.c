@@ -882,8 +882,10 @@ static MQTTStatus_t prvConfigureAgentTaskCtx( MQTTAgentTaskCtx_t * pxCtx,
         pxCtx->xConnectInfo.keepAliveSeconds = KEEP_ALIVE_INTERVAL_S;
 
         pxCtx->xConnectInfo.pUserName = mqtt_config.username;
-        pxCtx->xConnectInfo.userNameLength = (uint16_t)strlen(pxCtx->xConnectInfo.pUserName);
-
+        if(mqtt_config.username)
+        	pxCtx->xConnectInfo.userNameLength = (uint16_t)strlen(pxCtx->xConnectInfo.pUserName);
+        else
+        	pxCtx->xConnectInfo.userNameLength = 0;
         pxCtx->xConnectInfo.pPassword = NULL;
         pxCtx->xConnectInfo.passwordLength = 0U;
 
@@ -984,10 +986,10 @@ void vMQTTAgentTask(void *arg)
 {
     IotConnectDeviceClientConfig *client_config = arg;
 
-    mqtt_config.username = client_config->username;
+    mqtt_config.username = client_config->cfg->username;
     mqtt_config.host = client_config->host;
     mqtt_config.port = MQTTS_PORT;
-    mqtt_config.duid = client_config->duid;
+    mqtt_config.duid = client_config->cfg->duid;
     mqtt_config.root_ca_cert = client_config->auth->mqtt_root_ca;
     mqtt_config.client_certificate =
 			client_config->auth->data.cert_info.device_cert;
@@ -1113,7 +1115,7 @@ void vMQTTAgentTask(void *arg)
         BackoffAlgorithm_InitializeParams( &xReconnectParams,
                                            RETRY_BACKOFF_BASE,
                                            RETRY_MAX_BACKOFF_DELAY,
-                                           BACKOFF_ALGORITHM_RETRY_FOREVER );
+                                           0 );
 
         xTlsStatus = TLS_TRANSPORT_UNKNOWN_ERROR;
 
@@ -1239,7 +1241,7 @@ void vMQTTAgentTask(void *arg)
             BackoffAlgorithm_InitializeParams( &xReconnectParams,
                                                RETRY_BACKOFF_BASE,
                                                RETRY_MAX_BACKOFF_DELAY,
-                                               BACKOFF_ALGORITHM_RETRY_FOREVER );
+                                               0 );
 
             /* MQTTAgent_CommandLoop() is effectively the agent implementation.  It
              * will manage the MQTT protocol until such time that an error occurs,
