@@ -169,6 +169,7 @@ static MQTTAgentHandle_t xDefaultInstanceHandle = NULL;
  * @brief Configuration settings passed from iotconnect_init().
  */
 static struct IOTCMQTTConfig {
+	const char *username;
 	const char *host;
 	int port;
 	char *duid;
@@ -879,8 +880,12 @@ static MQTTStatus_t prvConfigureAgentTaskCtx( MQTTAgentTaskCtx_t * pxCtx,
         /* Always start the initial connection with a clean session */
         pxCtx->xConnectInfo.cleanSession = true;
         pxCtx->xConnectInfo.keepAliveSeconds = KEEP_ALIVE_INTERVAL_S;
-        pxCtx->xConnectInfo.pUserName = AWS_IOT_METRICS_STRING;
-        pxCtx->xConnectInfo.userNameLength = AWS_IOT_METRICS_STRING_LENGTH;
+
+        pxCtx->xConnectInfo.pUserName = mqtt_config.username;
+        if(mqtt_config.username)
+        	pxCtx->xConnectInfo.userNameLength = (uint16_t)strlen(pxCtx->xConnectInfo.pUserName);
+        else
+        	pxCtx->xConnectInfo.userNameLength = 0;
         pxCtx->xConnectInfo.pPassword = NULL;
         pxCtx->xConnectInfo.passwordLength = 0U;
 
@@ -981,9 +986,10 @@ void vMQTTAgentTask(void *arg)
 {
     IotConnectDeviceClientConfig *client_config = arg;
 
+    mqtt_config.username = client_config->cfg->username;
     mqtt_config.host = client_config->host;
     mqtt_config.port = MQTTS_PORT;
-    mqtt_config.duid = client_config->duid;
+    mqtt_config.duid = client_config->cfg->duid;
     mqtt_config.root_ca_cert = client_config->auth->mqtt_root_ca;
     mqtt_config.client_certificate =
 			client_config->auth->data.cert_info.device_cert;

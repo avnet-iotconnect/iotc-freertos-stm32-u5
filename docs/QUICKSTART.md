@@ -67,12 +67,22 @@ Press the black reset button next to the blue button to reset the board.
 ### Board Variable Configuration
 #### Thing Name
 
-First, configure the desired thing name / mqtt device identifier:
+First, configure the desired thing name / mqtt device identifier.  This is the duid or Device ID on Iot-Connect:
 
 ```
 > conf set thing_name device_name
 thing_name="device_name"
 ```
+
+#### IoT-Connect Platform (AWS or Azure)
+
+Next set the Iot-Connect "platform" variable. This can be set to either "aws" or "azure".  In the example below we set it to "aws".
+
+```
+>conf set env aws
+env = "aws"
+```
+
 
 #### IoT-Connect CPID and Env
 
@@ -115,15 +125,34 @@ Commit the staged configuration changes to non-volatile memory.
 Configuration saved to NVM.
 ```
 
-### Importing CA keys
-#### Import the Amazon Root CA Certificate
+### Importing CA certificate
 
-Use the `pki import cert root_ca_cert` command to import the Amazon Root CA Certificate.
+Use the `pki import cert root_ca_cert` command to import the appropriate CA certificate for AWS or Azure
 
-For this demo, we recommend you use the ["Starfield Services Root Certificate Authority - G2](https://www.amazontrust.com/repository/SFSRootCAG2.pem) Root CA Certificate which has signed all four available Amazon Trust Services Root CA certificates.
+
+#### Obtaining the CA Certificate for AWS
+
+We recommend you use the ["Starfield Services Root Certificate Authority - G2](https://www.amazontrust.com/repository/SFSRootCAG2.pem) Root CA Certificate which has signed all four available Amazon Trust Services Root CA certificates.
 
 Copy/Paste the contents of [SFSRootCAG2.pem](https://www.amazontrust.com/repository/SFSRootCAG2.pem)
 into your serial terminal after issuing the ```pki import cert``` command.
+
+Use the `pki import cert root_ca_cert` command to import the Amazon Root CA Certificate for AWS
+
+
+#### Obtaining the CA Certificate for Azure
+
+FWe recommend you use the ["DigiCert Global Root G2"](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem) Root CA Certificate.
+
+Copy/Paste the contents of [DigiCertGlobalRootG2.crt.pem](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem)
+into your serial terminal after issuing the ```pki import cert``` command.
+
+Use the `pki import cert root_ca_cert` command to import the Amazon Root CA Certificate for AWS
+
+or the DigiCert Global Root G2 for Azure.
+
+
+#### Import CA Certificate
 
 ```
 > pki import cert root_ca_cert
@@ -148,49 +177,6 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 -----END CERTIFICATE-----
 ```
 
-#### Import the GoDaddy Root CA Certificate for HTTPS Discovery and Sync
-
-Use the *pki import cert godaddy_ca_cert* command to import the GoDaddy CA Certificate.
-This is required for the IoT-Connect Discovery step during initialization. This feature
-can be enabled or disabled in the source code.
-
-For this demo, use ["GoDaddy CA Certificate](certs/godaddy_ca_cert.pem).
-
-Copy/Paste the contents of [godaddy_ca_cert.pem](certs/godaddy_ca_cert.pem)
-into your serial terminal after issuing the ```pki import cert``` command.
-
-```
-> pki import cert godaddy_ca_cert
-```
-
-After pressing enter at the end of the above line, paste the following GoDaddy CA
-certificate into the terminal.
-
-```
------BEGIN CERTIFICATE-----
-MIIDxTCCAq2gAwIBAgIBADANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
-EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAYBgNVBAoT
-EUdvRGFkZHkuY29tLCBJbmMuMTEwLwYDVQQDEyhHbyBEYWRkeSBSb290IENlcnRp
-ZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTA5MDkwMTAwMDAwMFoXDTM3MTIzMTIz
-NTk1OVowgYMxCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQH
-EwpTY290dHNkYWxlMRowGAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjExMC8GA1UE
-AxMoR28gRGFkZHkgUm9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkgLSBHMjCCASIw
-DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL9xYgjx+lk09xvJGKP3gElY6SKD
-E6bFIEMBO4Tx5oVJnyfq9oQbTqC023CYxzIBsQU+B07u9PpPL1kwIuerGVZr4oAH
-/PMWdYA5UXvl+TW2dE6pjYIT5LY/qQOD+qK+ihVqf94Lw7YZFAXK6sOoBJQ7Rnwy
-DfMAZiLIjWltNowRGLfTshxgtDj6AozO091GB94KPutdfMh8+7ArU6SSYmlRJQVh
-GkSBjCypQ5Yj36w6gZoOKcUcqeldHraenjAKOc7xiID7S13MMuyFYkMlNAJWJwGR
-tDtwKj9useiciAF9n9T521NtYJ2/LOdYq7hfRvzOxBsDPAnrSTFcaUaz4EcCAwEA
-AaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYE
-FDqahQcQZyi27/a9BUFuIMGU2g/eMA0GCSqGSIb3DQEBCwUAA4IBAQCZ21151fmX
-WWcDYfF+OwYxdS2hII5PZYe096acvNjpL9DbWu7PdIxztDhC2gV7+AJ1uP2lsdeu
-9tfeE8tTEH6KRtGX+rcuKxGrkLAngPnon1rpN5+r5N9ss4UXnT3ZJE95kTXWXwTr
-gIOrmgIttRD02JDHBHNA7XIloKmf7J6raBKZV8aPEjoJpL1E/QYVN8Gb5DKj7Tjo
-2GTzLH4U/ALqn83/B2gX2yKQOC16jdFU8WnjXzPKej17CuPKf1855eJ1usV2GDPO
-LPAvTK33sefOT6jEm0pUBsV/fdUID+Ic/n4XuKxe9tQWskMJDE32p2u0mYRlynqI
-4uJEvlz36hz1
------END CERTIFICATE-----
-```
 
 ### Generating Device Keys
 #### Generate a private key
