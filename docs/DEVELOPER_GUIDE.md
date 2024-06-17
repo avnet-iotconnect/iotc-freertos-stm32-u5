@@ -7,30 +7,30 @@ The [Quickstart Guide](QUICKSTART.md) shows how to set up the cloud account and 
 image.
 
 
-## Cloning the Repository
+## Clone the Repository & Checkout the "main-iotc" branch.
+_When using Windows long paths can be a problem so included in the command below is the option to create the `u5` directory as the checkout destination._
+
 To clone using HTTPS:
 ```
-git clone https://github.com/avnet-iotconnect/iotc-freertos-stm32-u5
+git clone https://github.com/avnet-iotconnect/iotc-freertos-stm32-u5 -b main-iotc u5
 ```
 Using SSH:
 
 ```
-git clone git@github.com:avnet-iotconnect/iotc-freertos-stm32-u5.git
+git clone git@github.com:avnet-iotconnect/iotc-freertos-stm32-u5.git -b main-iotc u5
 ```
 
 
-Switch to the *iotc-main* branch and download third-party submodules with the following
+Download third-party submodules with the following
 
 ```
-git checkout iotc-freertos-aws-feature
-git submodule update --init --recursive
+git submodule update --init
 ```
 
-Switch to the project's "IoTConnect/iotc-freertos-sdk" directory and run the rtosPull.sh script
+Run the iotc-freertos-sdk rtosPull.sh script
 
 ```
-cd IoTConnect/iotc-freertos-sdk
-./rtosPull.sh
+./IoTConnect/iotc-freertos-sdk/rtosPull.sh
 ```
 
 The rtosPull.sh script will ask a series of questions on which additional third-party modules to include,
@@ -60,7 +60,7 @@ Download the latest version of STM32CubeIDE from the [STMicroelectronics website
 3. Select ***File -> Import***.
 4. In the Import dialog box, under ***Select an Import Wizard***, select ***General -> Existing Projects Into Workspace*** and click *** Next >***
 5. Click **Browse** next to the *Select root directory* box and navigate to the root of this repository <CODE-BASE-DIRECTORY>.
-6. Click the check box next to both the *b_u585i_iot02a_ntz* project.
+6. Click the check box next to the *b_u585i_iot02a_ntz* project.
 > Ensure that *copy projects into workspace* is not selected.
 7. Click **Finish** to import the project.
 
