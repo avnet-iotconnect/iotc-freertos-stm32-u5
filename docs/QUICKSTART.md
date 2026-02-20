@@ -57,106 +57,91 @@ If needed, create an account using:
 
 Set the device identifier (`duid` / Device ID in /IOTCONNECT):
 
-Copy command only:
+Command:
 ```bash
 conf set thing_name device_name
 ```
 
 Expected response:
-```text
-thing_name="device_name"
-```
+   - thing_name="device_name"
 
 #### /IOTCONNECT Platform (AWS or Azure)
 
 Set `platform` to `aws` or `azure`:
 
-Copy command only:
+Command:
 ```bash
 conf set platform aws
 ```
 
 Expected response:
-```text
-platform="aws"
-```
+   - platform="aws"
 
 #### /IOTCONNECT CPID and Env
 
 Set `cpid` and `env` from /IOTCONNECT dashboard **Settings -> Key Vault**:
 https://awspoc.iotconnect.io/key-vault
 
-Copy command only:
+Command:
 ```bash
 conf set cpid cpid_string
 ```
 
 Expected response:
-```text
-cpid="********************"
-```
-
-Copy command only:
+   - cpid="********************"
+   
+Command:
 ```bash
 conf set env env_string
 ```
 
 Expected response:
-```text
-env="env_string"
-```
+   - env="env_string"
+
 
 There are additional settings such as `mqtt_endpoint` and `telemetry_cd`.
 These are usually populated by discovery/sync when the device connects.
 
 #### Wi-Fi SSID and Passphrase
 
-Copy command only:
+Command:
 ```bash
 conf set wifi_ssid ssidGoesHere
 ```
 
 Expected response:
-```text
-wifi_ssid="ssidGoesHere"
-```
+   - wifi_ssid="ssidGoesHere"
 
-Copy command only:
+
+Command:
 ```bash
 conf set wifi_credential MyWifiPassword
 ```
 
 Expected response:
-```text
-wifi_credential="MyWifiPassword"
-```
+   - wifi_credential="MyWifiPassword"
+
 
 #### Commit Configuration Changes
 
 Save staged settings to NVM:
 
-Copy command only:
+Command:
 ```bash
 conf commit
 ```
 
 Expected response:
-```text
-Configuration saved to NVM.
-```
+   - Configuration saved to NVM.
+
 
 ### Import CA Certificate
 
 Use:
 
-Copy command only:
+Command:
 ```bash
 pki import cert root_ca_cert
-```
-
-Terminal prompt example:
-```text
-> pki import cert root_ca_cert
 ```
 
 Then paste the certificate content into the terminal.
@@ -179,7 +164,7 @@ Do not upload any key for this flow.
 
 If you need to print a device certificate from the board, run:
 
-Copy command only:
+Command:
 ```bash
 pki generate cert
 ```
@@ -214,7 +199,7 @@ Use template import instead of manually entering telemetry and commands.
 1. Select **New Template**, then choose **Import**.
 1. Get the template JSON:
    - If you cloned this repo, use `IoTConnect/templates/device-template.json`.
-   - If you did not clone, [download `device-template.json`](https://raw.githubusercontent.com/avnet-iotconnect/iotc-freertos-stm32-u5/main-iotc/IoTConnect/templates/device-template.json).
+   - If you did not clone, [download `device-template.json`](https://raw.githubusercontent.com/avnet-iotconnect/iotc-freertos-stm32-u5/main-iotc/IoTConnect/templates/device-template.json) (right click and **Save as...**).
 1. Upload `device-template.json` in the Import dialog.
 1. Click `Save`.
 
@@ -261,16 +246,13 @@ Reference layout:
 
 ### Reset the Target Device
 
-Copy command only:
+Command:
 ```bash
 reset
 ```
 
 Expected response:
-```text
-> reset
-Resetting device.
-```
+   - Resetting device.
 
 The device should connect to Wi-Fi and then AWS MQTT using the configured values.
 
@@ -297,7 +279,7 @@ Confirm telemetry in /IOTCONNECT portal:
 This demo supports controlling red/green LEDs from cloud commands.
 Command parameter is required.
 
-Copy command only:
+Command:
 ```bash
 led-green on
 led-green off
@@ -305,9 +287,20 @@ led-red on
 led-red off
 ```
 
+## /IOTCONNECT Dynamic Dashboard
+
+![/IOTCONNECT Dynamic Dashboard](media/dashboard-u5.png)
+
+Dashboard template file: [dashboard-template.json](https://raw.githubusercontent.com/avnet-iotconnect/iotc-freertos-stm32-u5/main-iotc/IoTConnect/templates/dashboard-template.json)
+
+1. Open /IOTCONNECT and go to Dashboard.
+1. Click Import Dashboard and upload the JSON file linked above.
+1. Save the imported dashboard and map it to the correct device/template.
+1. Open the dashboard in live mode and verify widgets populate from telemetry.
+
 ## Erasing Settings (Factory Reset)
 
-Copy command only:
+Command:
 ```bash
 erase
 ```
