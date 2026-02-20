@@ -8,7 +8,7 @@ with /IOTCONNECT.
 
 ## Required Software
 
-- Download the pre-built firmware image: [b_u585i_iot02a_ntz.bin](https://downloads.iotconnect.io/partners/st/demos/u5/b_u585i_iot02a_ntz.bin)
+- Download the pre-built firmware image:  [b_u585i_iot02a_ntz.bin](https://downloads.iotconnect.io/partners/st/demos/u5/b_u585i_iot02a_ntz.bin)
 - Download and install [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
 - Install a serial console application such as [Tera Term](https://ttssh2.osdn.jp/index.html.en) or Minicom (Linux).
 
@@ -157,26 +157,41 @@ You will paste this directly into the /IOTCONNECT **Create Device** form.
 
 #### 1. Create a Device Template
 
+Use template import instead of manually entering telemetry and commands.
+
 1. Go to `https://awspoc.iotconnect.io/template/1/add`.
-1. Enter template name and template code.
+1. Select **New Template**, then choose **Import**.
+1. Get the template JSON:
+   - If you cloned this repo, use `IoTConnect/templates/device-template.json`.
+   - If you did not clone, download it directly:
+     `https://raw.githubusercontent.com/avnet-iotconnect/iotc-freertos-stm32-u5/main-iotc/IoTConnect/templates/device-template.json`
+1. Upload `device-template.json` in the Import dialog.
 1. Click `Save`.
-1. Add the following telemetry attributes:
+
+If you must enter values manually, use these telemetry attributes from `device-template.json`:
 
 | Name | Type |
 |---|---|
-| accelerometer_x | Integer |
-| accelerometer_y | Integer |
-| accelerometer_z | Integer |
+| acc_x | Integer |
+| acc_y | Integer |
+| acc_z | Integer |
+| mgnt_x | Integer |
+| mgnt_y | Integer |
+| mgnt_Z | Integer |
 | gyro_x | Integer |
 | gyro_y | Integer |
 | gyro_z | Integer |
+| temp_1 | Decimal |
+| temp_0 | Decimal |
+| humidity | Decimal |
+| pressure | Decimal |
 
-1. Add the following commands:
+Use these commands from `device-template.json`:
 
 | Command | Command Name | Parameter Required | Receipt Required | OTA |
 |---|---|---|---|---|
-| led-green | led-green | No | No | No |
-| led-red | led-red | No | No | No |
+| led-green | led-green | Yes | No | No |
+| led-red | led-red | Yes | No | No |
 
 #### 2. Register a New Device (Certificate Text Paste)
 
@@ -224,6 +239,7 @@ Confirm telemetry in /IOTCONNECT portal:
 ## Sending Commands
 
 This demo supports controlling red/green LEDs from cloud commands.
+Command parameter is required.
 
 - `led-green on` and `led-green off`
 - `led-red on` and `led-red off`
