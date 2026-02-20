@@ -1,114 +1,95 @@
-# IoT-Connect STM U5 IOT02 dev kit board demo for AWS
+# /IOTCONNECT STM32U5 B-U585I-IOT02A Quickstart
 
 ## Introduction
 
-This document provides a step-by-step-guide to program and evaluate the 
-[B-U585I-IOT02A STM32U5 Discovery kit for IoT](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board 
-on IoTConnect.
-
+This guide provides a step-by-step flow to program and evaluate the
+[B-U585I-IOT02A STM32U5 Discovery kit for IoT](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html)
+with /IOTCONNECT.
 
 ## Required Software
 
-* Download the pre-built firmware image: [b_u585i_iot02a_ntz.bin](https://downloads.iotconnect.io/partners/st/demos/u5/b_u585i_iot02a_ntz.bin)
-* Download and install the [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html) for STM32.
-* A serial console application, such as [Tera Term](https://ttssh2.osdn.jp/index.html.en) or Minicom on Linux 
- 
+- Download the pre-built firmware image: [b_u585i_iot02a_ntz.bin](https://iotconnect-sdk-images.s3.amazonaws.com/MCU/st/u5iotdk/b_u585i_iot02a_ntz.bin)
+- Download and install [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
+- Install a serial console application such as [Tera Term](https://ttssh2.osdn.jp/index.html.en) or Minicom (Linux).
 
-### Configure Your Board
+## Configure Your Board Serial Console
 
-Open the target board's serial port with your serial console application.
+Open the target board serial port with your terminal application.
 
-Determine the serial port that the STM32 board is connected to and ensure the following settings
-are configured as seen in the screenshot below:
+Determine the serial port used by the board and configure terminal settings as shown:
 
 ![Tera Term Serial Settings](media/teraterm-settings.png "Tera Term Serial Settings")
 
-On Linux this device may appear as /dev/ttyACM0 or /dev/ttyACM1.
+On Linux, the board is usually visible as `/dev/ttyACM0` or `/dev/ttyACM1`.
 
-You will now have access to the command line interface to the device,
-enter the command "help" to check that the serial port is functioning.
+Verify CLI access by entering:
 
-### MiniCOM Configuration
-1. `ls /dev/ttyACM*` to find the tty interface
-2. `minicom -D /dev/ttyACM0` or otherwise numbered interface
+```text
+help
+```
+
+### Minicom Configuration (Linux)
+1. Run `ls /dev/ttyACM*` to find the interface.
+1. Run `minicom -D /dev/ttyACM0` (or the detected interface).
 
 ## Cloud Account Setup
 
-An IoTConnect account is required to continue this guide.
-If you need to create an account, a free 2-month subscription is available.
-Please follow the 
-[Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md)
-guide and return to this guide once complete.
-
+A /IOTCONNECT account is required.
+If needed, create an account using:
+[Creating a New /IOTCONNECT Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md)
 
 ## Device Setup
 
-### Flash firmware image onto dev kit board.
+### Flash Firmware Image to the Board
 
-Open the STM32CubeProgrammer and plug the U5 board into a a laptop or PC with a
-USB cable.  The board should automatically be detected.
-
-Extract the archive containing the firmware images from files.witekio.com, the
-images are in several formats.
-
-In STM32CubeProgrammer click the Open File tab or "+" tab at the top of the
-window.  In the open file dialog select either of the `b_u585i_iot02a_ntz.elf` or
-`b_u585i_io02a_ntz.hex` files and click "Open" to load the file.
-
-Towards the top-right of the STM32CubeProgrammer window is a blue "Download" button,
-click on this to download the image to the developer kit board.  The red LED
-next to the USB socket will flash during the download.
-
-Once the download is reported as complete, click the green "Disconnect" button int
-the top-right corner of STM32CubeProgrammer.
-
-Press the black reset button next to the blue button to reset the board.
+1. Open STM32CubeProgrammer.
+1. Connect the board to your PC with USB.
+1. Open a firmware file:
+   - pre-built: `b_u585i_iot02a_ntz.bin`, or
+   - locally built: `b_u585i_iot02a_ntz.elf` / `b_u585i_iot02a_ntz.hex`.
+1. Click **Download** to program the image.
+1. Click **Disconnect** when complete.
+1. Press the board reset button.
 
 ### Board Variable Configuration
+
 #### Thing Name
 
-First, configure the desired thing name / mqtt device identifier.  This is the duid or Device ID on Iot-Connect:
+Set the device identifier (`duid` / Device ID in /IOTCONNECT):
 
-```
+```text
 > conf set thing_name device_name
 thing_name="device_name"
 ```
 
-#### IoT-Connect Platform (AWS or Azure)
+#### /IOTCONNECT Platform (AWS or Azure)
 
-Next set the Iot-Connect "platform" variable. This can be set to either "aws" or "azure".  In the example below we set it to "aws".
+Set `platform` to `aws` or `azure`:
 
+```text
+> conf set platform aws
+platform="aws"
 ```
->conf set env aws
-env = "aws"
-```
 
+#### /IOTCONNECT CPID and Env
 
-#### IoT-Connect CPID and Env
-
-Next, set the IoT-Connect "cpid" and "env" variables.  These can be found on the IoT-Connect web dashboard under Settings - Key Vault.
-
+Set `cpid` and `env` from /IOTCONNECT dashboard **Settings -> Key Vault**:
 https://awspoc.iotconnect.io/key-vault
 
-```
+```text
 > conf set cpid cpid_string
-cpid = "********************"
+cpid="********************"
 
->conf set env env_string
-env = "env_string"
+> conf set env env_string
+env="env_string"
 ```
 
+There are additional settings such as `mqtt_endpoint` and `telemetry_cd`.
+These are usually populated by discovery/sync when the device connects.
 
-NOTE: There are additional settings for "mqtt_endpoint" and "telemetry_cd".  These should not need
-setting as these are obtained by the discovery and sync steps when the device connects to the Internet.
-If there are issues, set these to dummy values or obtain from the IoT-Connect dashboard.
+#### Wi-Fi SSID and Passphrase
 
-
-#### WiFi SSID and Passphrase
-
-Next, configure you WiFi network details:
-
-```
+```text
 > conf set wifi_ssid ssidGoesHere
 wifi_ssid="ssidGoesHere"
 
@@ -116,93 +97,44 @@ wifi_ssid="ssidGoesHere"
 wifi_credential="MyWifiPassword"
 ```
 
-
 #### Commit Configuration Changes
-Commit the staged configuration changes to non-volatile memory.
 
-```
+Save staged settings to NVM:
+
+```text
 > conf commit
 Configuration saved to NVM.
 ```
 
-### Importing CA certificate
+### Import CA Certificate
 
-Use the `pki import cert root_ca_cert` command to import the appropriate CA certificate for AWS or Azure
+Use:
 
-
-#### Obtaining the CA Certificate for AWS
-
-We recommend you use the ["Starfield Services Root Certificate Authority - G2](https://www.amazontrust.com/repository/SFSRootCAG2.pem) Root CA Certificate which has signed all four available Amazon Trust Services Root CA certificates.
-
-Copy/Paste the contents of [SFSRootCAG2.pem](https://www.amazontrust.com/repository/SFSRootCAG2.pem)
-into your serial terminal after issuing the ```pki import cert``` command.
-
-Use the `pki import cert root_ca_cert` command to import the Amazon Root CA Certificate for AWS
-
-
-#### Obtaining the CA Certificate for Azure
-
-FWe recommend you use the ["DigiCert Global Root G2"](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem) Root CA Certificate.
-
-Copy/Paste the contents of [DigiCertGlobalRootG2.crt.pem](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem)
-into your serial terminal after issuing the ```pki import cert``` command.
-
-Use the `pki import cert root_ca_cert` command to import the Amazon Root CA Certificate for AWS
-
-or the DigiCert Global Root G2 for Azure.
-
-
-#### Import CA Certificate
-
-```
+```text
 > pki import cert root_ca_cert
 ```
 
-After pressing enter at the end of the above line, paste the certificate into the terminal.
+Then paste the certificate content into the terminal.
 
-```
------BEGIN CERTIFICATE-----
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
------END CERTIFICATE-----
-```
+#### Obtain CA Certificate for AWS
 
+Recommended root CA:
+["Starfield Services Root Certificate Authority - G2"](https://www.amazontrust.com/repository/SFSRootCAG2.pem)
 
-### Generating Device Keys
-#### Generate a private key
-Use the *pki generate key* command to generate a new ECDSA device key pair. The resulting
-public key will be printed to the console.
+#### Obtain CA Certificate for Azure
 
-```
-> pki generate key
+Recommended root CA:
+["DigiCert Global Root G2"](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt.pem)
 
-SUCCESS: Key pair generated and stored in
-Private Key Label: tls_key_priv
-Public Key Label: tls_key_pub
------BEGIN PUBLIC KEY-----
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=
------END PUBLIC KEY-----
-```
+### Get Public Device Certificate Text
 
-Save this to a file named: `THING_NAME.pub`
+You only need the public device certificate text for /IOTCONNECT Create Device.
+Do not create PEM files for this flow.
+Do not upload any key for this flow.
 
+If you need to print a device certificate from the board, run:
 
-#### Generate a self-signed certificate
-Next, use the *pki generate cert* command to generate a new self-signed certificate.
-We will upload this to IoT-Connect as a CA Certificate (Individual) in the next step:
-
-```
+```text
 > pki generate cert
 
 -----BEGIN CERTIFICATE-----
@@ -218,68 +150,62 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==
 -----END CERTIFICATE-----
 ```
 
-Save the resulting certificate to a new file, including the  BEGIN CERTIFICATE and END CERTIFICATE lines.
-Save this to a file name `THING_NAME.pem`
+Copy the certificate text from `-----BEGIN CERTIFICATE-----` through `-----END CERTIFICATE-----`.
+You will paste this directly into the /IOTCONNECT **Create Device** form.
 
+### Register the Device with /IOTCONNECT
 
-### Register the device with IoTConnect-AWS
+#### 1. Create a Device Template
 
-#### 1. Creating a Device Template
-This will specify the telemetry attributes and commands issuable to the IoT device.
+1. Go to `https://awspoc.iotconnect.io/template/1/add`.
+1. Enter template name and template code.
+1. Click `Save`.
+1. Add the following telemetry attributes:
 
-1. Goto https://awspoc.iotconnect.io/template/1/add
-2. Input the template name and the template code.
-3. Click `Save`, this will send you to a further configuration page.
-4. Input the following attributes:
+| Name | Type |
+|---|---|
+| accelerometer_x | Integer |
+| accelerometer_y | Integer |
+| accelerometer_z | Integer |
+| gyro_x | Integer |
+| gyro_y | Integer |
+| gyro_z | Integer |
 
-| Name              | Type      |
-|-------------------|-----------|
-| accelerometer_x   | Integer   |
-| accelerometer_y   | Integer   |
-| accelerometer_z   | Integer   |
-| gyro_x            | Integer   |
-| gyro_y            | Integer   |
-| gyro_z            | Integer   |
+1. Add the following commands:
 
-5. Input the following Commands
+| Command | Command Name | Parameter Required | Receipt Required | OTA |
+|---|---|---|---|---|
+| led-green | led-green | No | No | No |
+| led-red | led-red | No | No | No |
 
-| Command           | Command-Name | Parameter Required | Receipt Required | OTA   |
---------------------|--------------|--------------------|------------------|-------|
-| led-green         | led-green    | No                 | No               | No    |
-| led-red           | led-red      | No                 | No               | No    |
+#### 2. Register a New Device (Certificate Text Paste)
 
-#### 2. Registering a CA Cert
-This will be the root CA signing key used on device.
+1. Go to `https://awspoc.iotconnect.io/device/1/add`.
+1. Enter `Unique ID` and `Display Name` (typically the same).
+1. Select your `Entity`.
+1. Select the template created in step 1.
+1. Under **Device certificate**, select **Use my certificate**.
+1. Paste the certificate text into **Certificate Text**.
+1. Do **not** select a **Certificate Authority**.
+1. Do **not** click **Browse** for a certificate file.
+1. Click `Save & View`.
 
-1. Goto https://awspoc.iotconnect.io/certificate/add
-2. Input the name of the CA cert you wish to register. This can be `THING_NAME-cert` for easier tracking with individual devices or `SFSRootCAG2-cert` for easier tracking of the CA.
-3. Set `Certificate Type` as `CA Signed Certificate (Individual)`.
-4. Upload the certificate used when creating your device, such as `SFSRootCAG2.pem`. **THIS IS NOT** `THING_NAME.pem`.
-5. Click `Save` and verify the cert has been created by checking https://awspoc.iotconnect.io/certificate
+Reference layout:
 
-#### 3. Registering a new Device
-This will register a new device with an existing template and CA cert.
+![Create Device screen using certificate text paste (no CA and no Browse)](media/iotconnect-create-device-certificate-text.svg)
 
-1. Goto https://awspoc.iotconnect.io/device/1/add
-2. Enter the `Unique ID` and `Display Name`, it is advised to keep them the same unless you have a specific reason otherwise.
-3. Select your `Entity`, this will usually be the company/project.
-4. Select a template for your device, such as the one created in step 1.
-5. Click `Save & View`
+### Reset the Target Device
 
-### Reset the target device
-
-Reset the device and it shall automatically connect to the WiFi router and AWS MQTT broker based
-on the configuration set earlier. 
-
-```
+```text
 > reset
 Resetting device.
 ```
 
-This will take several seconds to connect, There is usually a wait after the filesystem is mounted.
-When connected the following lines should appear on the CLI.
+The device should connect to Wi-Fi and then AWS MQTT using the configured values.
 
-```
+Example connection logs:
+
+```text
 <INF>     9574 [MQTTAgent ] Network connection 0x20025538: TLS handshake successful. (mbedtls_transport.c:1367)
 <INF>     9574 [MQTTAgent ] Network connection 0x20025538: Connection to xxxxxxxx-ats.iot.us-east-1.amazonaws.com:8883 established. (mbedtls_transport.c:1374)
 <INF>     9864 [MQTTAgent ] Starting a clean MQTT Session. (mqtt_agent_task.c:1169)
@@ -289,25 +215,22 @@ When connected the following lines should appear on the CLI.
 
 ## Verification
 
-At this point the board should be sending telemetry to the IoTConnect portal. We can verify by checking the "Live Data" feed.
-* Return to the *Devices* page and click on the newly created Device ID.
-* On the left sub-menu, click "Live Data" and after a few seconds, MQTT data should be shown. 
+Confirm telemetry in /IOTCONNECT portal:
 
+1. Open *Devices* and select the new device.
+1. Open *Live Data*.
+1. Confirm telemetry appears after a few seconds.
 
 ## Sending Commands
 
-This demo supports commands to turn the red and green LEDs on the development kit board on and off.
+This demo supports controlling red/green LEDs from cloud commands.
 
-Send a command "led-green en"  to enable the green LED, set "led-green" to turn green LED off. The same
-applies to "led-red en" for the red LED.
+- `led-green on` and `led-green off`
+- `led-red on` and `led-red off`
 
+## Erasing Settings (Factory Reset)
 
-## Erasing settings (factory reset)
-
-The settings can be erased with the following command:
-
-```
+```text
 > erase
 Erasing QSPI NVM, will reset afterwards.
 ```
-

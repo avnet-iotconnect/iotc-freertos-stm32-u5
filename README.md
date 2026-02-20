@@ -1,4 +1,4 @@
-# /IOTCONNECT Example for STM32-U5 based on FreeRTOS for AWS
+# /IOTCONNECT Example for STM32-U5 based on FreeRTOS
 
 <img src="docs/media/top-norm.png" width="30%" height="20%" align="right"/>
 
@@ -11,4 +11,5 @@ The QuickStart Guide below shows how to use a a binary image to program the boar
 Use this Developer Guide to setup the project and modify the source to further develop using the sample application.
 * [Developer Guide](docs/DEVELOPER_GUIDE.md)
 
-
+The Reference Guide below provides detailed background on demo tasks, software components, and project architecture.
+* [Reference Guide](README_REFERENCE.md)

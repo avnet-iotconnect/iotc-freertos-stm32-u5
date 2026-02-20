@@ -1,104 +1,101 @@
-# FreeRTOS STM32U5 IoT Reference for IoTConnect on AWS
+# FreeRTOS STM32U5 IoT Reference for /IOTCONNECT
 
 ## Introduction
-This document guides you through building the sources into a firmware image for the STM32 U5 IoT-Conneect example for AWS.
+This guide walks through cloning, building, and flashing the STM32U5 /IOTCONNECT example from source.
 
-The [Quickstart Guide](QUICKSTART.md) shows how to set up the cloud account and device settings with a pre-built firmware
-image.
+If you want to use a pre-built firmware image instead of building from source, use the [Quickstart Guide](QUICKSTART.md).
 
+## Clone the Repository and Checkout `main-iotc`
+_When using Windows, long paths can be a problem. The commands below clone into a short `u5` directory._
 
-## Clone the Repository & Checkout the "main-iotc" branch.
-_When using Windows long paths can be a problem so included in the command below is the option to create the `u5` directory as the checkout destination._
-
-To clone using HTTPS:
-```
+Clone with HTTPS:
+```bash
 git clone https://github.com/avnet-iotconnect/iotc-freertos-stm32-u5 -b main-iotc u5
+cd u5
 ```
-Using SSH:
 
-```
+Clone with SSH:
+```bash
 git clone git@github.com:avnet-iotconnect/iotc-freertos-stm32-u5.git -b main-iotc u5
+cd u5
 ```
 
-
-Download third-party submodules with the following
-
-```
+Initialize repository submodules (run from the repository root):
+```bash
 git submodule update --init
 ```
 
-Run the iotc-freertos-sdk rtosPull.sh script
-
-```
+Run the /IOTCONNECT RTOS pull script:
+```bash
 ./IoTConnect/iotc-freertos-sdk/rtosPull.sh
 ```
 
-The rtosPull.sh script will ask a series of questions on which additional third-party modules to include,
-select "yes" for the following list of modules and "no" for the other modules
-  
-  * coreHTTP
-  * FreeRTOSPlus
-
+When prompted by `rtosPull.sh`, select:
+- `yes` for `FreeRTOS-Plus`
+- `yes` for `coreHTTP`
+- `no` for all other modules
 
 ## Install STM32CubeIDE
-
-Download the latest version of STM32CubeIDE from the [STMicroelectronics website](https://www.st.com/en/development-tools/stm32cubeide.html).
-
+Download and install STM32CubeIDE from the [STMicroelectronics website](https://www.st.com/en/development-tools/stm32cubeide.html).
 
 ## Import Project into STM32CubeIDE
-
 1. Open STM32CubeIDE.
+1. If prompted for workspace, select the repository root directory (`CODE-BASE-DIRECTORY`).
+1. If workspace is not prompted at startup, use `File -> Switch Workspace -> Other`.
+1. Click **Launch**.
+1. Close the **Information Center** tab if needed.
+1. Select `File -> Import`.
+1. In the import wizard, select `General -> Existing Projects Into Workspace` and click **Next**.
+1. Click **Browse** next to `Select root directory` and choose the repository root (`CODE-BASE-DIRECTORY`).
+1. Select project `b_u585i_iot02a_ntz`.
+1. Ensure `Copy projects into workspace` is not selected.
+1. Click **Finish**.
 
-> NOTE -  when asked to open a workspace directory, you **must** select the location in which you cloned this git repository (CODE-BASE-DIRECTORY) as the workspace directory.
+## Build
+In the **Project Explorer** pane, right click `b_u585i_iot02a_ntz` and select **Build Project**.
 
-> If you are not asked to select a workspace when STM32CubeIDE starts, you may access this dialog via the ***File -> Switch Workspace -> Other*** menu item.
-
-
-1. Click **Launch**
-2. Close the **Information Center** tab if needed
-
-3. Select ***File -> Import***.
-4. In the Import dialog box, under ***Select an Import Wizard***, select ***General -> Existing Projects Into Workspace*** and click *** Next >***
-5. Click **Browse** next to the *Select root directory* box and navigate to the root of this repository <CODE-BASE-DIRECTORY>.
-6. Click the check box next to the *b_u585i_iot02a_ntz* project.
-> Ensure that *copy projects into workspace* is not selected.
-7. Click **Finish** to import the project.
-
-
-#### Building
-In the **Project Explorer** pane of STM32CubeIDE, Right click on the project and select **Build Project**
-
-
-When the build has succeeded you should see the following lines in the console:
-
-``` 
-Finished building: b_u585i_iot02a_ntz.bin 
+When the build succeeds, the console includes:
+```text
+Finished building: b_u585i_iot02a_ntz.bin
 Finished building: b_u585i_iot02a_ntz.hex
 Finished building: b_u585i_iot02a_ntz.list
 ```
 
+Build artifacts are generated in:
+`Projects/b_u585i_iot02a_ntz/Debug/`
 
-#### Flashing the Firmware onto the Device
+## Known Build Warnings
+This project links with minimal syscalls (`--specs=nosys.specs`). As a result, linker warnings about `_read`, `_write`, `_open`, `_close`, `_fstat`, `_isatty`, `_lseek`, `_getpid`, and `_kill` may appear.
 
-To flash the b_u585i_iot02a_ntz project to your STM32U5 IoT Discovery Kit:
+This project may also emit:
+- `warning: b_u585i_iot02a_ntz.elf has a LOAD segment with RWX permissions`
+- linker `note:` lines such as `the message above does not take linker garbage collection into account`
 
-1. Choose Run -> Run Configurations
-1. Choose C/C++ Application
-1. Select the Flash_ntz configuration
-1. Click on the Run button
+What we observed:
+- STM32CubeIDE can show a summary such as `Build Failed. 9 errors, 10 warnings` even when linking completed and output artifacts were generated.
+- In this case, treat `Finished building target: b_u585i_iot02a_ntz.elf` plus generated `.bin`, `.hex`, and `.list` files as the success signal.
 
+Optional cleanup (if you want a quieter build):
+1. Keep default behavior and ignore these messages (recommended for quick bring-up).
+1. Add syscall retarget implementations (`_write`, `_read`, `_open`, `_close`, `_fstat`, `_isatty`, `_lseek`, `_getpid`, `_kill`) in your application layer if you need proper libc I/O behavior.
+1. Suppress the RWX linker warning by adding linker option `-Wl,--no-warn-rwx-segments` in STM32CubeIDE (`Project Properties -> C/C++ Build -> Settings -> MCU GCC Linker -> Miscellaneous`).
 
-#### Configuring device and connecting to IOT-Connect
+## Flash the Firmware onto the Device
+To flash the `b_u585i_iot02a_ntz` project to STM32U5 IoT Discovery Kit:
 
-Follow the (Quickstart Guide)[QUICKSTART.md] for instructions on setting up the IpT-Connect account
-and device settings using the serial port.
+1. Choose `Run -> Run Configurations`.
+1. Choose `C/C++ Application`.
+1. Select configuration `Flash_ntz`.
+1. Click **Run**.
 
+## Configure Device and Connect to /IOTCONNECT
+Follow the [Quickstart Guide](QUICKSTART.md) for setting up your /IOTCONNECT account and device settings over the serial port.
 
-### Modifying telemetry update rate.
+## Modify Telemetry Update Rate
+By default, sensor telemetry is sent every 3 seconds.
 
-By default the sensor telemetry is sent every 3 seconds.  This can be altered by changing the
-constant MQTT\_PUBLISH\_PERIOD\_MS in Src/app/iotconnect_app.c.
+To change motion sensor telemetry interval, edit `MQTT_PUBLISH_PERIOD_MS` in:
+`Common/app/motion_sensors_publish.c`
 
-
-
-
+To change environmental sensor telemetry interval, edit `MQTT_PUBLISH_TIME_BETWEEN_MS` in:
+`Common/app/env_sensor_publish.c`
