@@ -1,0 +1,142 @@
+{
+    "code": "stm32u5q",
+    "name": "stm32u5q",
+    "authType": 2,
+    "attributes": [
+        {
+            "name": "acc_x",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "acc_y",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "acc_z",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "mgnt_x",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "mgnt_y",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "mgnt_Z",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "gyro_x",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "gyro_y",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "gyro_z",
+            "displayName": "",
+            "type": "INTEGER",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "temp_1",
+            "displayName": "",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "temp_0",
+            "displayName": "",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "humidity",
+            "displayName": "",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        },
+        {
+            "name": "pressure",
+            "displayName": "",
+            "type": "DECIMAL",
+            "description": "",
+            "unit": "",
+            "aggregateTypes": []
+        }
+    ],
+    "commands": [
+        {
+            "name": "led-green",
+            "command": "led-green",
+            "requiredParam": true,
+            "requiredAck": false,
+            "isOTACommand": false
+        },
+        {
+            "name": "led-red",
+            "command": "led-red",
+            "requiredParam": true,
+            "requiredAck": false,
+            "isOTACommand": false
+        }
+    ],
+    "messageVersion": "2.1",
+    "msgCode": "XG4E1QF",
+    "capability": "0",
+    "enableCSR": "false",
+    "c2dOnDemand": 0,
+    "properties": {
+        "description": null,
+        "dataFrequency": "5",
+        "fileSupport": false,
+        "certRenewalDay": 0,
+        "enableCSR": false
+    },
+    "_meta": {
+        "version": "2.0"
+    }
+}

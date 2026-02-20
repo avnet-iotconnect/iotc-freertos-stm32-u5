@@ -57,8 +57,13 @@ If needed, create an account using:
 
 Set the device identifier (`duid` / Device ID in /IOTCONNECT):
 
+Copy command only:
+```bash
+conf set thing_name device_name
+```
+
+Expected response:
 ```text
-> conf set thing_name device_name
 thing_name="device_name"
 ```
 
@@ -66,8 +71,13 @@ thing_name="device_name"
 
 Set `platform` to `aws` or `azure`:
 
+Copy command only:
+```bash
+conf set platform aws
+```
+
+Expected response:
 ```text
-> conf set platform aws
 platform="aws"
 ```
 
@@ -76,11 +86,23 @@ platform="aws"
 Set `cpid` and `env` from /IOTCONNECT dashboard **Settings -> Key Vault**:
 https://awspoc.iotconnect.io/key-vault
 
-```text
-> conf set cpid cpid_string
-cpid="********************"
+Copy command only:
+```bash
+conf set cpid cpid_string
+```
 
-> conf set env env_string
+Expected response:
+```text
+cpid="********************"
+```
+
+Copy command only:
+```bash
+conf set env env_string
+```
+
+Expected response:
+```text
 env="env_string"
 ```
 
@@ -89,11 +111,23 @@ These are usually populated by discovery/sync when the device connects.
 
 #### Wi-Fi SSID and Passphrase
 
-```text
-> conf set wifi_ssid ssidGoesHere
-wifi_ssid="ssidGoesHere"
+Copy command only:
+```bash
+conf set wifi_ssid ssidGoesHere
+```
 
-> conf set wifi_credential MyWifiPassword
+Expected response:
+```text
+wifi_ssid="ssidGoesHere"
+```
+
+Copy command only:
+```bash
+conf set wifi_credential MyWifiPassword
+```
+
+Expected response:
+```text
 wifi_credential="MyWifiPassword"
 ```
 
@@ -101,8 +135,13 @@ wifi_credential="MyWifiPassword"
 
 Save staged settings to NVM:
 
+Copy command only:
+```bash
+conf commit
+```
+
+Expected response:
 ```text
-> conf commit
 Configuration saved to NVM.
 ```
 
@@ -110,6 +149,12 @@ Configuration saved to NVM.
 
 Use:
 
+Copy command only:
+```bash
+pki import cert root_ca_cert
+```
+
+Terminal prompt example:
 ```text
 > pki import cert root_ca_cert
 ```
@@ -134,6 +179,12 @@ Do not upload any key for this flow.
 
 If you need to print a device certificate from the board, run:
 
+Copy command only:
+```bash
+pki generate cert
+```
+
+Terminal prompt example:
 ```text
 > pki generate cert
 
@@ -150,7 +201,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==
 -----END CERTIFICATE-----
 ```
 
-Copy the certificate text from `-----BEGIN CERTIFICATE-----` through `-----END CERTIFICATE-----`.
+Copy the certificate text from `-----BEGIN CERTIFICATE-----` through `-----END CERTIFICATE-----` (including both lines).
 You will paste this directly into the /IOTCONNECT **Create Device** form.
 
 ### Register the Device with /IOTCONNECT
@@ -163,8 +214,7 @@ Use template import instead of manually entering telemetry and commands.
 1. Select **New Template**, then choose **Import**.
 1. Get the template JSON:
    - If you cloned this repo, use `IoTConnect/templates/device-template.json`.
-   - If you did not clone, download it directly:
-     `https://raw.githubusercontent.com/avnet-iotconnect/iotc-freertos-stm32-u5/main-iotc/IoTConnect/templates/device-template.json`
+   - If you did not clone, [download `device-template.json`](https://raw.githubusercontent.com/avnet-iotconnect/iotc-freertos-stm32-u5/main-iotc/IoTConnect/templates/device-template.json).
 1. Upload `device-template.json` in the Import dialog.
 1. Click `Save`.
 
@@ -211,6 +261,12 @@ Reference layout:
 
 ### Reset the Target Device
 
+Copy command only:
+```bash
+reset
+```
+
+Expected response:
 ```text
 > reset
 Resetting device.
@@ -241,11 +297,22 @@ Confirm telemetry in /IOTCONNECT portal:
 This demo supports controlling red/green LEDs from cloud commands.
 Command parameter is required.
 
-- `led-green on` and `led-green off`
-- `led-red on` and `led-red off`
+Copy command only:
+```bash
+led-green on
+led-green off
+led-red on
+led-red off
+```
 
 ## Erasing Settings (Factory Reset)
 
+Copy command only:
+```bash
+erase
+```
+
+Expected response:
 ```text
 > erase
 Erasing QSPI NVM, will reset afterwards.
