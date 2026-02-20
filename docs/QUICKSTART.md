@@ -8,7 +8,7 @@ with /IOTCONNECT.
 
 ## Required Software
 
-- Download the pre-built firmware image: [b_u585i_iot02a_ntz.bin](https://iotconnect-sdk-images.s3.amazonaws.com/MCU/st/u5iotdk/b_u585i_iot02a_ntz.bin)
+- Download the pre-built firmware image: [b_u585i_iot02a_ntz.bin](https://downloads.iotconnect.io/partners/st/demos/u5/b_u585i_iot02a_ntz.bin)
 - Download and install [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html).
 - Install a serial console application such as [Tera Term](https://ttssh2.osdn.jp/index.html.en) or Minicom (Linux).
 
