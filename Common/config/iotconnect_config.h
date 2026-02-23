@@ -13,5 +13,7 @@
 #define IOTCONFIG_USE_DISCOVERY_SYNC
 #define IOTCONFIG_ENABLE_OTA
 
+/* Discovery host used when platform is set to AWS. */
+#define IOTCONFIG_DISCOVERY_HOST_AWS    "discovery.iotconnect.io"
 
 #endif /* CONFIG_IOTCONNECT_CONFIG_H_ */
